@@ -23,6 +23,29 @@
     intervalId: null,
   };
 
+  let wakeLockSentinel = null;
+
+  async function requestWakeLock() {
+    if (!navigator.wakeLock) return;
+    try {
+      wakeLockSentinel = await navigator.wakeLock.request("screen");
+      wakeLockSentinel.addEventListener("release", function () {
+        wakeLockSentinel = null;
+      });
+    } catch (_) {
+      wakeLockSentinel = null;
+    }
+  }
+
+  function releaseWakeLock() {
+    if (wakeLockSentinel) {
+      try {
+        wakeLockSentinel.release();
+      } catch (_) {}
+      wakeLockSentinel = null;
+    }
+  }
+
   const dom = {
     viewSettings: document.getElementById("view-settings"),
     viewTimer: document.getElementById("view-timer"),
@@ -299,6 +322,7 @@
     if (state.intervalId) clearInterval(state.intervalId);
     state.intervalId = null;
     state.running = false;
+    releaseWakeLock();
     dom.btnStart.textContent = "Start";
     dom.btnStart.setAttribute("aria-label", "Start timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
@@ -334,6 +358,7 @@
     clearInterval(state.intervalId);
     state.intervalId = null;
     state.running = false;
+    releaseWakeLock();
     dom.btnStart.textContent = "Start";
     dom.btnStart.setAttribute("aria-label", "Start timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
@@ -343,6 +368,7 @@
   function resumeTimer() {
     if (state.running) return;
     state.running = true;
+    requestWakeLock();
     dom.btnStart.textContent = "Pause";
     dom.btnStart.setAttribute("aria-label", "Pause timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
@@ -355,6 +381,7 @@
     state.restPhasesCompleted = 0;
     goToTimer();
     state.running = true;
+    requestWakeLock();
     dom.btnStart.textContent = "Pause";
     dom.btnStart.setAttribute("aria-label", "Pause timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
@@ -374,6 +401,7 @@
 
   function reset() {
     saveSessionIfAny();
+    releaseWakeLock();
     if (state.intervalId) {
       clearInterval(state.intervalId);
       state.intervalId = null;
@@ -501,4 +529,8 @@
     });
   });
   dom.btnClearHistory.addEventListener("click", clearHistory);
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && state.running) requestWakeLock();
+  });
 })();
