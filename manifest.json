@@ -1,0 +1,11 @@
+{
+  "name": "Gymmer",
+  "short_name": "Gymmer",
+  "description": "Work and rest interval timer for gym workouts",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0f17",
+  "theme_color": "#0c0f17",
+  "icons": []
+}

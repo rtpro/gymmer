@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="theme-color" content="#0c0f17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Gymmer – Work / Rest Timer</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1 class="title">Gymmer</h1>
+      <p class="subtitle">Work & rest timer</p>
+    </header>
+
+    <main class="main">
+      <!-- Settings view: configure then start -->
+      <div class="view view-settings" id="view-settings">
+        <div class="settings-card">
+          <div class="presets workout-presets">
+            <label class="preset-label">Workout presets</label>
+            <div class="workout-preset-buttons" role="group" aria-label="Workout presets">
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="chest" data-sets="4" data-work="45" data-rest="210" aria-label="Chest: 4 sets, 45s work, 3:30 rest">
+                <span class="preset-icon" aria-hidden="true">🏋️</span>
+                <span>Chest</span>
+              </button>
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="triceps" data-sets="4" data-work="30" data-rest="120" aria-label="Triceps: 4 sets, 30s work, 2:00 rest">
+                <span class="preset-icon" aria-hidden="true">💪</span>
+                <span>Triceps</span>
+              </button>
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="back" data-sets="4" data-work="30" data-rest="150" aria-label="Back: 4 sets, 30s work, 2:30 rest">
+                <span class="preset-icon" aria-hidden="true">🧍</span>
+                <span>Back</span>
+              </button>
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="biceps" data-sets="4" data-work="45" data-rest="120" aria-label="Biceps: 4 sets, 45s work, 2:00 rest">
+                <span class="preset-icon" aria-hidden="true">💪</span>
+                <span>Biceps</span>
+              </button>
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="legs" data-sets="5" data-work="30" data-rest="180" aria-label="Legs: 5 sets, 30s work, 3:00 rest">
+                <span class="preset-icon" aria-hidden="true">🦵</span>
+                <span>Legs</span>
+              </button>
+              <button type="button" class="preset-btn preset-btn-workout" data-preset="abs" data-sets="4" data-work="30" data-rest="60" aria-label="Abs: 4 sets, 30s work, 1m rest">
+                <span class="preset-icon" aria-hidden="true">🤸</span>
+                <span>Abs</span>
+              </button>
+            </div>
+          </div>
+          <div class="presets">
+            <label class="preset-label">Sets</label>
+            <div class="preset-buttons preset-buttons-sets" role="group" aria-label="Number of sets">
+              <button type="button" class="preset-btn preset-btn-sets" data-sets="1">1</button>
+              <button type="button" class="preset-btn preset-btn-sets" data-sets="2">2</button>
+              <button type="button" class="preset-btn preset-btn-sets" data-sets="3">3</button>
+              <button type="button" class="preset-btn preset-btn-sets" data-sets="4">4</button>
+              <button type="button" class="preset-btn preset-btn-sets active" data-sets="5">5</button>
+            </div>
+          </div>
+          <div class="presets">
+            <label class="preset-label">Work</label>
+            <div class="preset-buttons" role="group" aria-label="Work duration">
+              <button type="button" class="preset-btn active" data-target="work" data-seconds="30">30s</button>
+              <button type="button" class="preset-btn" data-target="work" data-seconds="45">45s</button>
+            </div>
+          </div>
+          <div class="presets">
+            <label class="preset-label">Rest</label>
+            <div class="preset-buttons preset-buttons-rest" role="group" aria-label="Rest duration">
+              <button type="button" class="preset-btn active" data-target="rest" data-seconds="60">1m</button>
+              <button type="button" class="preset-btn" data-target="rest" data-seconds="90">1:30</button>
+              <button type="button" class="preset-btn" data-target="rest" data-seconds="120">2m</button>
+              <button type="button" class="preset-btn" data-target="rest" data-seconds="150">2:30</button>
+              <button type="button" class="preset-btn" data-target="rest" data-seconds="180">3m</button>
+              <button type="button" class="preset-btn" data-target="rest" data-seconds="210">3:30</button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary btn-start-workout" id="btn-start-workout" aria-label="Start workout">Start workout</button>
+
+          <div class="completions-section" id="completions-section">
+            <div class="preset-label completions-label">Completed workouts</div>
+            <ul class="completions-list" id="completions-list" aria-label="Recent completed workouts"></ul>
+            <button type="button" class="btn btn-back btn-clear-history" id="btn-clear-history" aria-label="Clear history">Clear history</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Timer view: countdown and controls -->
+      <div class="view view-timer hidden" id="view-timer">
+        <div class="timer-block">
+          <div class="set-dots" id="set-dots" role="status" aria-label="Set progress"></div>
+          <div class="phase-badge" id="phase-badge" aria-live="polite">Work</div>
+
+          <button type="button" class="timer-display-button" id="timer-display-btn" aria-label="Start timer">
+            <div class="timer-display" id="timer-display" aria-live="assertive" style="--progress: 1">
+              <svg class="timer-ring" viewBox="0 0 100 100" aria-hidden="true">
+                <circle class="timer-ring-track" cx="50" cy="50" r="45" />
+                <circle class="timer-ring-fill" cx="50" cy="50" r="45" />
+              </svg>
+              <span class="timer-value" id="timer-value">0:30</span>
+            </div>
+          </button>
+        </div>
+
+        <div class="timer-actions">
+          <button type="button" class="btn btn-back" id="btn-settings" aria-label="Back to settings">Settings</button>
+          <button type="button" class="btn btn-secondary" id="btn-reset" aria-label="Hold to reset timer">Reset</button>
+          <button type="button" class="btn btn-primary" id="btn-start" aria-label="Start timer">Start</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
