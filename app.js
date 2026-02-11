@@ -259,6 +259,7 @@
         state.intervalId = null;
       }
       if (state.phase === "work") {
+        soundSetComplete();
         showPhaseEndAnimation("Set complete", "set-complete", function () {
           switchPhase();
           state.intervalId = setInterval(tick, 1000);
@@ -277,8 +278,9 @@
       soundPrepTick();
       setTimerValue(String(state.remainingSeconds));
     } else {
-      if (state.phase === "work" && state.remainingSeconds === 3) soundWorkEndingSoon();
-      if (state.phase === "rest" && state.remainingSeconds === 3) soundRestEndingSoon();
+      if ((state.phase === "work" || state.phase === "rest") && state.remainingSeconds >= 1 && state.remainingSeconds <= 3) {
+        soundCountdownTick();
+      }
       setTimerValue(formatTime(state.remainingSeconds));
     }
     updateProgressRing();
@@ -286,6 +288,7 @@
 
   let audioCtx = null;
   const SOUND_VOLUME = 2.8;
+  const VOL_MAIN = 0.22;     // all sounds
 
   function getAudioContext() {
     if (!audioCtx) {
@@ -315,7 +318,7 @@
 
   function soundPrepTick() {
     try {
-      playTone(600, 0.08, 0.15);
+      playTone(600, 0.08, VOL_MAIN);
     } catch (_) {}
   }
 
@@ -324,8 +327,8 @@
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
-      playTone(523, 0.12, 0.2, t);
-      playTone(659, 0.2, 0.2, t + 0.15);
+      playTone(523, 0.12, VOL_MAIN, t);
+      playTone(659, 0.2, VOL_MAIN, t + 0.15);
     } catch (_) {}
   }
 
@@ -334,19 +337,13 @@
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
-      playTone(440, 0.15, 0.2, t);
-      playTone(349, 0.2, 0.18, t + 0.18);
+      playTone(440, 0.15, VOL_MAIN, t);
+      playTone(349, 0.2, VOL_MAIN, t + 0.18);
     } catch (_) {}
   }
 
   function soundWork() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const t = ctx.currentTime;
-      playTone(523, 0.1, 0.2, t);
-      playTone(523, 0.1, 0.2, t + 0.12);
-    } catch (_) {}
+    soundWorkStart();
   }
 
   function soundDone() {
@@ -354,29 +351,26 @@
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
-      playTone(523, 0.15, 0.22, t);
-      playTone(659, 0.15, 0.22, t + 0.2);
-      playTone(784, 0.25, 0.22, t + 0.4);
+      playTone(523, 0.15, VOL_MAIN, t);
+      playTone(659, 0.15, VOL_MAIN, t + 0.2);
+      playTone(784, 0.25, VOL_MAIN, t + 0.4);
     } catch (_) {}
   }
 
-  function soundWorkEndingSoon() {
+  function soundCountdownTick() {
+    try {
+      playTone(600, 0.08, VOL_MAIN);
+    } catch (_) {}
+  }
+
+  function soundSetComplete() {
     try {
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
-      playTone(440, 0.1, 0.2, t);
-      playTone(554, 0.12, 0.2, t + 0.15);
-    } catch (_) {}
-  }
-
-  function soundRestEndingSoon() {
-    try {
-      const ctx = getAudioContext();
-      if (!ctx) return;
-      const t = ctx.currentTime;
-      playTone(523, 0.1, 0.2, t);
-      playTone(440, 0.12, 0.2, t + 0.15);
+      playTone(523, 0.12, VOL_MAIN, t);
+      playTone(659, 0.14, VOL_MAIN, t + 0.14);
+      playTone(784, 0.2, VOL_MAIN, t + 0.3);
     } catch (_) {}
   }
 
