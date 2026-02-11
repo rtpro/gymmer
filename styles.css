@@ -346,6 +346,44 @@ body::before {
   font-weight: 700;
 }
 
+.timer-value--phase-end {
+  font-size: clamp(1.5rem, 8vw, 2.25rem);
+  font-weight: 700;
+  text-align: center;
+  animation: phase-end-in 0.5s ease-out;
+}
+
+.timer-value--phase-end[data-phase-end="set-complete"] {
+  color: var(--rest);
+  text-shadow: 0 0 24px var(--rest-dim);
+}
+
+.timer-value--phase-end[data-phase-end="work"] {
+  color: var(--work);
+  text-shadow: 0 0 24px var(--work-dim);
+}
+
+.timer-display--phase-end .timer-ring-fill {
+  transition: stroke-dashoffset 0.4s ease-out;
+}
+
+@keyframes phase-end-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timer-value--phase-end {
+    animation: none;
+  }
+}
+
 .presets {
   display: flex;
   flex-direction: column;

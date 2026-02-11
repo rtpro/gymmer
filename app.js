@@ -203,6 +203,36 @@
     updateProgressRing();
   }
 
+  const PHASE_END_DURATION_MS = 1200;
+  let phaseEndTimeoutId = null;
+
+  function clearPhaseEndAnimation() {
+    if (phaseEndTimeoutId) {
+      clearTimeout(phaseEndTimeoutId);
+      phaseEndTimeoutId = null;
+    }
+    dom.timerValue.classList.remove("timer-value--phase-end");
+    dom.timerValue.removeAttribute("data-phase-end");
+    dom.timerDisplay.classList.remove("timer-display--phase-end");
+  }
+
+  function showPhaseEndAnimation(message, dataPhaseEnd, onComplete) {
+    clearPhaseEndAnimation();
+    dom.timerValue.textContent = message;
+    dom.timerValue.removeAttribute("data-digits");
+    dom.timerValue.classList.add("timer-value--phase-end");
+    dom.timerValue.setAttribute("data-phase-end", dataPhaseEnd);
+    dom.timerDisplay.classList.add("timer-display--phase-end");
+    dom.timerDisplay.style.setProperty("--progress", "0");
+    phaseEndTimeoutId = setTimeout(function () {
+      phaseEndTimeoutId = null;
+      dom.timerValue.classList.remove("timer-value--phase-end");
+      dom.timerValue.removeAttribute("data-phase-end");
+      dom.timerDisplay.classList.remove("timer-display--phase-end");
+      onComplete();
+    }, PHASE_END_DURATION_MS);
+  }
+
   function tick() {
     if (state.remainingSeconds <= 0) {
       if (state.phase === "prep") {
@@ -216,6 +246,33 @@
       return;
     }
     state.remainingSeconds -= 1;
+    if (state.remainingSeconds <= 0) {
+      if (state.phase === "prep") {
+        setPhase("work");
+        updateProgressRing();
+        soundWorkStart();
+        haptic();
+        return;
+      }
+      if (state.intervalId) {
+        clearInterval(state.intervalId);
+        state.intervalId = null;
+      }
+      if (state.phase === "work") {
+        showPhaseEndAnimation("Set complete", "set-complete", function () {
+          switchPhase();
+          state.intervalId = setInterval(tick, 1000);
+        });
+        return;
+      }
+      if (state.phase === "rest") {
+        showPhaseEndAnimation("Work!", "work", function () {
+          switchPhase();
+          state.intervalId = setInterval(tick, 1000);
+        });
+        return;
+      }
+    }
     if (state.phase === "prep") {
       soundPrepTick();
       setTimerValue(String(state.remainingSeconds));
@@ -351,6 +408,7 @@
   }
 
   function stopTimer() {
+    clearPhaseEndAnimation();
     if (state.intervalId) clearInterval(state.intervalId);
     state.intervalId = null;
     state.running = false;
@@ -406,6 +464,10 @@
 
   function pauseTimer() {
     if (!state.running) return;
+    if (phaseEndTimeoutId) {
+      clearPhaseEndAnimation();
+      switchPhase();
+    }
     clearInterval(state.intervalId);
     state.intervalId = null;
     state.running = false;
@@ -456,6 +518,7 @@
   function reset() {
     saveSessionIfAny();
     releaseWakeLock();
+    clearPhaseEndAnimation();
     if (state.intervalId) {
       clearInterval(state.intervalId);
       state.intervalId = null;
