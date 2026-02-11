@@ -165,25 +165,28 @@ body::before {
 
 .set-dots {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.6rem;
   justify-content: center;
   align-items: center;
-  min-height: 0.5rem;
+  min-height: 1.5rem;
 }
 
 .set-dot {
-  width: 10px;
-  height: 10px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
   border-radius: 50%;
   background: var(--surface);
-  border: 1px solid var(--surface-hover);
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  border: 3px solid var(--surface-hover);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .set-dot.filled {
   background: var(--work);
   border-color: var(--work);
-  box-shadow: 0 0 12px var(--work-dim);
+  border-width: 3px;
+  box-shadow: 0 0 18px var(--work-dim), 0 0 6px rgba(232, 76, 76, 0.5);
 }
 
 .timer-display-button {
@@ -241,6 +244,12 @@ body::before {
   background: var(--prep-dim);
   color: var(--prep);
   box-shadow: 0 0 0 1px var(--prep-ring);
+}
+
+.phase-badge.paused {
+  background: rgba(139, 149, 168, 0.2);
+  color: var(--text-muted);
+  box-shadow: 0 0 0 1px rgba(139, 149, 168, 0.4);
 }
 
 .timer-display {
@@ -309,14 +318,27 @@ body::before {
   display: none;
 }
 
+.timer-display.paused {
+  opacity: 0.8;
+  filter: saturate(0.65);
+}
+
 .timer-value {
-  font-size: clamp(3.25rem, 16vw, 4.75rem);
+  font-size: clamp(3.75rem, 18vw, 5.25rem);
   font-weight: 700;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
   position: relative;
   z-index: 1;
   text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+}
+
+.timer-value[data-digits="2"] {
+  font-size: clamp(4.5rem, 22vw, 6.5rem);
+}
+
+.timer-value[data-digits="1"] {
+  font-size: clamp(5.25rem, 28vw, 7.5rem);
 }
 
 .timer-value.done-text {
@@ -535,6 +557,8 @@ body::before {
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.2s, background 0.2s;
   -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .btn:active {
@@ -584,7 +608,7 @@ body::before {
   background: var(--surface-hover);
   transform: scaleX(0);
   transform-origin: left;
-  animation: reset-hold 800ms linear forwards;
+  animation: reset-hold 1200ms linear forwards;
   z-index: 0;
 }
 

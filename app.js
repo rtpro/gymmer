@@ -21,6 +21,7 @@
     remainingSeconds: 30,
     running: false,
     intervalId: null,
+    selectedWorkoutPreset: null,
   };
 
   let wakeLockSentinel = null;
@@ -55,7 +56,6 @@
     timerDisplay: document.getElementById("timer-display"),
     timerDisplayBtn: document.getElementById("timer-display-btn"),
     btnStartWorkout: document.getElementById("btn-start-workout"),
-    btnSettings: document.getElementById("btn-settings"),
     btnStart: document.getElementById("btn-start"),
     btnReset: document.getElementById("btn-reset"),
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
@@ -163,6 +163,14 @@
     return m > 0 ? `${m}:${String(s).padStart(2, "0")}` : String(s);
   }
 
+  function setTimerValue(str) {
+    dom.timerValue.textContent = str;
+    var len = str.length;
+    if (len === 1) dom.timerValue.setAttribute("data-digits", "1");
+    else if (len === 2) dom.timerValue.setAttribute("data-digits", "2");
+    else dom.timerValue.setAttribute("data-digits", "long");
+  }
+
   function getPhaseTotalSeconds() {
     if (state.phase === "prep") return PREP_SECONDS;
     return state.phase === "work" ? state.workSeconds : state.restSeconds;
@@ -181,15 +189,15 @@
       dom.phaseBadge.textContent = "Get ready";
       dom.phaseBadge.className = "phase-badge prep";
       dom.timerDisplay.className = "timer-display prep";
-      dom.timerValue.textContent = String(PREP_SECONDS);
       dom.timerValue.classList.remove("done-text");
+      setTimerValue(String(PREP_SECONDS));
     } else {
       state.remainingSeconds = phase === "work" ? state.workSeconds : state.restSeconds;
       dom.phaseBadge.textContent = phase === "work" ? "Work" : "Rest";
       dom.phaseBadge.className = "phase-badge " + phase;
       dom.timerDisplay.className = "timer-display " + phase;
-      dom.timerValue.textContent = formatTime(state.remainingSeconds);
       dom.timerValue.classList.remove("done-text");
+      setTimerValue(formatTime(state.remainingSeconds));
     }
     dom.timerDisplay.classList.remove("done");
     updateProgressRing();
@@ -210,14 +218,17 @@
     state.remainingSeconds -= 1;
     if (state.phase === "prep") {
       soundPrepTick();
-      dom.timerValue.textContent = String(state.remainingSeconds);
+      setTimerValue(String(state.remainingSeconds));
     } else {
-      dom.timerValue.textContent = formatTime(state.remainingSeconds);
+      if (state.phase === "work" && state.remainingSeconds === 3) soundWorkEndingSoon();
+      if (state.phase === "rest" && state.remainingSeconds === 3) soundRestEndingSoon();
+      setTimerValue(formatTime(state.remainingSeconds));
     }
     updateProgressRing();
   }
 
   let audioCtx = null;
+  const SOUND_VOLUME = 2.8;
 
   function getAudioContext() {
     if (!audioCtx) {
@@ -238,7 +249,8 @@
     gain.connect(ctx.destination);
     osc.frequency.value = freq;
     osc.type = "sine";
-    gain.gain.setValueAtTime(volume, t);
+    const v = Math.min(1, volume * SOUND_VOLUME);
+    gain.gain.setValueAtTime(v, t);
     gain.gain.exponentialRampToValueAtTime(0.01, t + duration);
     osc.start(t);
     osc.stop(t + duration);
@@ -291,6 +303,26 @@
     } catch (_) {}
   }
 
+  function soundWorkEndingSoon() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      playTone(440, 0.1, 0.2, t);
+      playTone(554, 0.12, 0.2, t + 0.15);
+    } catch (_) {}
+  }
+
+  function soundRestEndingSoon() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      playTone(523, 0.1, 0.2, t);
+      playTone(440, 0.12, 0.2, t + 0.15);
+    } catch (_) {}
+  }
+
   function haptic() {
     if (typeof navigator.vibrate === "function") navigator.vibrate(50);
   }
@@ -312,7 +344,7 @@
     renderSetDots();
     if (state.setsRemaining <= 0) {
       dom.timerDisplay.classList.add("done");
-      dom.timerValue.textContent = "Done!";
+      setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
       dom.timerDisplay.style.setProperty("--progress", "0");
     }
@@ -353,15 +385,36 @@
     haptic();
   }
 
+  function getPhaseLabel() {
+    if (state.phase === "prep") return "Get ready";
+    if (state.phase === "work") return "Work";
+    if (state.phase === "rest") return "Rest";
+    return "Work";
+  }
+
+  function applyPausedUI(paused) {
+    if (paused) {
+      dom.phaseBadge.textContent = "Paused";
+      dom.phaseBadge.className = "phase-badge paused";
+      dom.timerDisplay.classList.add("paused");
+    } else {
+      dom.phaseBadge.textContent = getPhaseLabel();
+      dom.phaseBadge.className = "phase-badge " + state.phase;
+      dom.timerDisplay.classList.remove("paused");
+    }
+  }
+
   function pauseTimer() {
     if (!state.running) return;
     clearInterval(state.intervalId);
     state.intervalId = null;
     state.running = false;
     releaseWakeLock();
-    dom.btnStart.textContent = "Start";
-    dom.btnStart.setAttribute("aria-label", "Start timer");
-    dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
+    haptic();
+    applyPausedUI(true);
+    dom.btnStart.textContent = "Resume";
+    dom.btnStart.setAttribute("aria-label", "Resume timer");
+    dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
     dom.btnStart.classList.remove("running");
   }
 
@@ -369,6 +422,7 @@
     if (state.running) return;
     state.running = true;
     requestWakeLock();
+    applyPausedUI(false);
     dom.btnStart.textContent = "Pause";
     dom.btnStart.setAttribute("aria-label", "Pause timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
@@ -412,16 +466,20 @@
     state.restPhasesCompleted = 0;
     state.phase = "work";
     state.remainingSeconds = state.workSeconds;
+    state.selectedWorkoutPreset = null;
     dom.btnStart.textContent = "Start";
     dom.btnStart.setAttribute("aria-label", "Start timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
     dom.btnStart.classList.remove("running");
+    dom.timerDisplay.classList.remove("paused");
     setPhase("work");
     updateSetDisplay();
+    showView("settings");
   }
 
   function applyPreset(target, seconds) {
     if (state.running) return;
+    state.selectedWorkoutPreset = null;
     if (target === "work") {
       state.workSeconds = seconds;
       if (state.phase === "work") state.remainingSeconds = seconds;
@@ -429,7 +487,7 @@
       state.restSeconds = seconds;
       if (state.phase === "rest") state.remainingSeconds = seconds;
     }
-    dom.timerValue.textContent = formatTime(state.remainingSeconds);
+    setTimerValue(formatTime(state.remainingSeconds));
     syncPresetActiveStates();
   }
 
@@ -437,19 +495,21 @@
     if (state.running) return;
     state.totalSets = total;
     state.setsRemaining = total;
+    state.selectedWorkoutPreset = null;
     updateSetDisplay();
     syncPresetActiveStates();
   }
 
-  function applyWorkoutPreset(sets, workSeconds, restSeconds) {
+  function applyWorkoutPreset(sets, workSeconds, restSeconds, presetId) {
     if (state.running) return;
     state.totalSets = sets;
     state.setsRemaining = sets;
     state.workSeconds = workSeconds;
     state.restSeconds = restSeconds;
+    state.selectedWorkoutPreset = presetId != null ? presetId : null;
     if (state.phase === "work") state.remainingSeconds = workSeconds;
     if (state.phase === "rest") state.remainingSeconds = restSeconds;
-    dom.timerValue.textContent = formatTime(state.remainingSeconds);
+    setTimerValue(formatTime(state.remainingSeconds));
     updateSetDisplay();
     syncPresetActiveStates();
   }
@@ -466,11 +526,7 @@
       btn.classList.toggle("active", !!match);
     });
     dom.workoutPresetBtns.forEach((btn) => {
-      const match =
-        parseInt(btn.dataset.sets, 10) === state.totalSets &&
-        parseInt(btn.dataset.work, 10) === state.workSeconds &&
-        parseInt(btn.dataset.rest, 10) === state.restSeconds;
-      btn.classList.toggle("active", !!match);
+      btn.classList.toggle("active", btn.dataset.preset === state.selectedWorkoutPreset);
     });
   }
 
@@ -485,7 +541,7 @@
   renderCompletions();
   syncPresetActiveStates();
 
-  const RESET_HOLD_MS = 800;
+  const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
 
   function clearResetHold() {
@@ -497,7 +553,6 @@
   }
 
   dom.btnStartWorkout.addEventListener("click", startWorkout);
-  dom.btnSettings.addEventListener("click", goToSettings);
   dom.btnStart.addEventListener("click", startStop);
   dom.btnReset.addEventListener("pointerdown", function (e) {
     if (e.button !== 0) return;
@@ -512,6 +567,9 @@
   dom.btnReset.addEventListener("pointerup", clearResetHold);
   dom.btnReset.addEventListener("pointercancel", clearResetHold);
   dom.btnReset.addEventListener("pointerleave", clearResetHold);
+  dom.btnReset.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+  });
   dom.timerDisplayBtn.addEventListener("click", onTimerDisplayClick);
   dom.presetBtns.forEach((btn) => {
     btn.addEventListener("click", () => applyPreset(btn.dataset.target, parseInt(btn.dataset.seconds, 10)));
@@ -524,14 +582,19 @@
       applyWorkoutPreset(
         parseInt(btn.dataset.sets, 10),
         parseInt(btn.dataset.work, 10),
-        parseInt(btn.dataset.rest, 10)
+        parseInt(btn.dataset.rest, 10),
+        btn.dataset.preset
       );
     });
   });
   dom.btnClearHistory.addEventListener("click", clearHistory);
 
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible" && state.running) requestWakeLock();
+    if (document.visibilityState === "visible") {
+      if (state.running) requestWakeLock();
+    } else if (document.visibilityState === "hidden" && state.running) {
+      pauseTimer();
+    }
   });
 
   if ("serviceWorker" in navigator) {
