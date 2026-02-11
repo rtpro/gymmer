@@ -238,7 +238,7 @@
       if (state.phase === "prep") {
         setPhase("work");
         updateProgressRing();
-        soundWorkStart();
+        soundBeginWork();
         haptic();
         return;
       }
@@ -250,7 +250,7 @@
       if (state.phase === "prep") {
         setPhase("work");
         updateProgressRing();
-        soundWorkStart();
+        soundBeginWork();
         haptic();
         return;
       }
@@ -267,6 +267,7 @@
         return;
       }
       if (state.phase === "rest") {
+        soundBeginWork();
         showPhaseEndAnimation("Work!", "work", function () {
           switchPhase();
           state.intervalId = setInterval(tick, 1000);
@@ -332,6 +333,16 @@
     } catch (_) {}
   }
 
+  function soundBeginWork() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      playTone(523, 0.1, VOL_MAIN, t);
+      playTone(784, 0.22, VOL_MAIN, t + 0.12);
+    } catch (_) {}
+  }
+
   function soundRest() {
     try {
       const ctx = getAudioContext();
@@ -340,10 +351,6 @@
       playTone(440, 0.15, VOL_MAIN, t);
       playTone(349, 0.2, VOL_MAIN, t + 0.18);
     } catch (_) {}
-  }
-
-  function soundWork() {
-    soundWorkStart();
   }
 
   function soundDone() {
@@ -430,7 +437,6 @@
         haptic();
         return;
       }
-      soundWork();
     }
     setPhase(next);
     updateSetDisplay();
