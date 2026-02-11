@@ -533,4 +533,8 @@
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible" && state.running) requestWakeLock();
   });
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(function () {});
+  }
 })();
