@@ -424,7 +424,6 @@
     const next = state.phase === "work" ? "rest" : "work";
     if (next === "rest") {
       state.workPhasesCompleted += 1;
-      soundRest();
     }
     if (next === "work") {
       state.restPhasesCompleted += 1;
@@ -615,10 +614,17 @@
     dom.btnReset.classList.remove("holding");
   }
 
-  dom.btnStartWorkout.addEventListener("click", startWorkout);
-  dom.btnStart.addEventListener("click", startStop);
+  dom.btnStartWorkout.addEventListener("click", function () {
+    haptic();
+    startWorkout();
+  });
+  dom.btnStart.addEventListener("click", function () {
+    haptic();
+    startStop();
+  });
   dom.btnReset.addEventListener("pointerdown", function (e) {
     if (e.button !== 0) return;
+    haptic();
     clearResetHold();
     dom.btnReset.classList.add("holding");
     resetHoldTimer = setTimeout(function () {
@@ -633,15 +639,25 @@
   dom.btnReset.addEventListener("contextmenu", function (e) {
     e.preventDefault();
   });
-  dom.timerDisplayBtn.addEventListener("click", onTimerDisplayClick);
+  dom.timerDisplayBtn.addEventListener("click", function () {
+    haptic();
+    onTimerDisplayClick();
+  });
   dom.presetBtns.forEach((btn) => {
-    btn.addEventListener("click", () => applyPreset(btn.dataset.target, parseInt(btn.dataset.seconds, 10)));
+    btn.addEventListener("click", () => {
+      haptic();
+      applyPreset(btn.dataset.target, parseInt(btn.dataset.seconds, 10));
+    });
   });
   dom.setBtns.forEach((btn) => {
-    btn.addEventListener("click", () => applySets(parseInt(btn.dataset.sets, 10)));
+    btn.addEventListener("click", () => {
+      haptic();
+      applySets(parseInt(btn.dataset.sets, 10));
+    });
   });
   dom.workoutPresetBtns.forEach((btn) => {
     btn.addEventListener("click", function () {
+      haptic();
       applyWorkoutPreset(
         parseInt(btn.dataset.sets, 10),
         parseInt(btn.dataset.work, 10),
@@ -650,7 +666,10 @@
       );
     });
   });
-  dom.btnClearHistory.addEventListener("click", clearHistory);
+  dom.btnClearHistory.addEventListener("click", function () {
+    haptic();
+    clearHistory();
+  });
 
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") {
