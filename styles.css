@@ -121,8 +121,54 @@ body::before {
 }
 
 .view-timer {
-  justify-content: center;
-  gap: 1.75rem;
+  flex: 1;
+  min-height: 0;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.view-history {
+  justify-content: flex-start;
+}
+
+.history-card {
+  width: 100%;
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-soft) 100%);
+  border: 1px solid var(--surface-hover);
+  border-radius: 1.25rem;
+  padding: 1.5rem 1.25rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.history-header .btn-back-history {
+  flex-shrink: 0;
+}
+
+.history-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.02em;
+}
+
+.view-history .completions-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  margin-bottom: 0.75rem;
 }
 
 .settings-card {
@@ -141,13 +187,20 @@ body::before {
   margin-top: 0.25rem;
 }
 
+.settings-card .btn-view-history {
+  margin-top: 0.25rem;
+}
+
 .timer-actions {
   width: 100%;
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
   align-items: center;
   justify-content: center;
+  margin-top: 1.75rem;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .timer-actions .btn-back {
@@ -157,9 +210,12 @@ body::before {
 }
 
 .timer-block {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 1.25rem;
 }
 
@@ -416,33 +472,18 @@ body::before {
   gap: 0.5rem;
 }
 
-.preset-buttons:has(.preset-btn[data-target="work"]) .preset-btn {
-  grid-column: span 3;
+/* Work: same row style as Sets (2 options) */
+.preset-buttons:has(.preset-btn[data-target="work"]) {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .preset-buttons-sets {
   grid-template-columns: repeat(5, 1fr);
 }
 
+/* Rest: same grid style as Sets (no scroll) */
 .preset-buttons-rest {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  margin: 0 -0.25rem;
-  padding: 0 0.25rem;
-  min-width: 0;
-  display: grid;
-  grid-template-columns: repeat(6, minmax(2.75rem, 1fr));
-}
-
-.preset-buttons-rest::-webkit-scrollbar {
-  display: none;
-}
-
-.preset-buttons-rest .preset-btn {
-  min-width: 2.75rem;
-  padding-left: 0.6rem;
-  padding-right: 0.6rem;
+  grid-template-columns: repeat(6, 1fr);
 }
 
 .preset-btn {
@@ -467,20 +508,9 @@ body::before {
   border-color: rgba(139, 149, 168, 0.4);
 }
 
-.preset-btn[data-target="work"].active {
-  color: #fff;
-  background: var(--work);
-  border-color: var(--work);
-  box-shadow: 0 2px 12px var(--work-dim);
-}
-
-.preset-btn[data-target="rest"].active {
-  color: #fff;
-  background: var(--rest);
-  border-color: var(--rest);
-  box-shadow: 0 2px 12px var(--rest-dim);
-}
-
+/* Work, Rest: same active look as Sets */
+.preset-btn[data-target="work"].active,
+.preset-btn[data-target="rest"].active,
 .preset-btn-sets.active {
   color: var(--text);
   background: var(--surface-hover);
@@ -636,18 +666,23 @@ body::before {
 
 .btn-secondary.holding {
   position: relative;
-  overflow: hidden;
 }
 
+/* Progress bar above the button so it’s not hidden by the finger */
 .btn-secondary.holding::before {
   content: "";
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  margin-bottom: 0.5rem;
+  height: 0.35rem;
+  border-radius: var(--radius-pill);
   background: var(--surface-hover);
   transform: scaleX(0);
   transform-origin: left;
   animation: reset-hold 1200ms linear forwards;
-  z-index: 0;
+  z-index: 1;
 }
 
 @keyframes reset-hold {

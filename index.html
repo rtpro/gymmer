@@ -85,11 +85,19 @@
           </div>
           <button type="button" class="btn btn-primary btn-start-workout" id="btn-start-workout" aria-label="Start workout">Start workout</button>
 
-          <div class="completions-section" id="completions-section">
-            <div class="preset-label completions-label">Completed workouts</div>
-            <ul class="completions-list" id="completions-list" aria-label="Recent completed workouts"></ul>
-            <button type="button" class="btn btn-back btn-clear-history" id="btn-clear-history" aria-label="Clear history">Clear history</button>
+          <button type="button" class="btn btn-secondary btn-view-history" id="btn-view-history" aria-label="View workout history">Workout history</button>
+        </div>
+      </div>
+
+      <!-- History view: completed workouts -->
+      <div class="view view-history hidden" id="view-history">
+        <div class="history-card">
+          <div class="history-header">
+            <button type="button" class="btn btn-back btn-back-history" id="btn-back-history" aria-label="Back to settings">Back</button>
+            <h2 class="history-title">Workout history</h2>
           </div>
+          <ul class="completions-list" id="completions-list" aria-label="Recent completed workouts"></ul>
+          <button type="button" class="btn btn-back btn-clear-history" id="btn-clear-history" aria-label="Clear history">Clear history</button>
         </div>
       </div>
 

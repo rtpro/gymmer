@@ -50,6 +50,7 @@
   const dom = {
     viewSettings: document.getElementById("view-settings"),
     viewTimer: document.getElementById("view-timer"),
+    viewHistory: document.getElementById("view-history"),
     setDots: document.getElementById("set-dots"),
     phaseBadge: document.getElementById("phase-badge"),
     timerValue: document.getElementById("timer-value"),
@@ -63,12 +64,17 @@
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
     completionsList: document.getElementById("completions-list"),
     btnClearHistory: document.getElementById("btn-clear-history"),
+    btnViewHistory: document.getElementById("btn-view-history"),
+    btnBackHistory: document.getElementById("btn-back-history"),
   };
 
   function showView(name) {
+    const isSettings = name === "settings";
     const isTimer = name === "timer";
-    dom.viewSettings.classList.toggle("hidden", isTimer);
+    const isHistory = name === "history";
+    dom.viewSettings.classList.toggle("hidden", !isSettings);
     dom.viewTimer.classList.toggle("hidden", !isTimer);
+    dom.viewHistory.classList.toggle("hidden", !isHistory);
   }
 
   function goToSettings() {
@@ -79,6 +85,10 @@
 
   function goToTimer() {
     showView("timer");
+  }
+
+  function goToHistory() {
+    showView("history");
   }
 
   function getCompletions() {
@@ -669,6 +679,14 @@
   dom.btnClearHistory.addEventListener("click", function () {
     haptic();
     clearHistory();
+  });
+  dom.btnViewHistory.addEventListener("click", function () {
+    haptic();
+    goToHistory();
+  });
+  dom.btnBackHistory.addEventListener("click", function () {
+    haptic();
+    goToSettings();
   });
 
   document.addEventListener("visibilitychange", function () {
