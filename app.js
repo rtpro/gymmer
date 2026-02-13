@@ -59,6 +59,7 @@
     btnStartWorkout: document.getElementById("btn-start-workout"),
     btnStart: document.getElementById("btn-start"),
     btnReset: document.getElementById("btn-reset"),
+    timerActions: document.querySelector(".timer-actions"),
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
@@ -79,9 +80,9 @@
     dom.viewHistory.classList.toggle("hidden", !isHistory);
   }
 
-  function goToSettings() {
+  function goToSettings(skipSave) {
     if (state.running) pauseTimer();
-    saveSessionIfAny();
+    if (!skipSave) saveSessionIfAny();
     showView("settings");
   }
 
@@ -439,6 +440,16 @@
       setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
       dom.timerDisplay.style.setProperty("--progress", "0");
+      dom.btnStart.textContent = "Again";
+      dom.btnStart.setAttribute("aria-label", "Start another round");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Start another round");
+      dom.btnStart.classList.remove("btn-primary");
+      dom.btnStart.classList.add("btn-secondary");
+      dom.btnReset.textContent = "Done";
+      dom.btnReset.setAttribute("aria-label", "Go back to settings");
+      dom.btnReset.classList.remove("btn-secondary");
+      dom.btnReset.classList.add("btn-primary");
+      dom.timerActions.classList.add("done");
     }
   }
 
@@ -528,6 +539,7 @@
   function startWorkout() {
     state.workPhasesCompleted = 0;
     state.restPhasesCompleted = 0;
+    state.setsRemaining = state.totalSets;
     goToTimer();
     state.running = true;
     requestWakeLock();
@@ -535,6 +547,13 @@
     dom.btnStart.setAttribute("aria-label", "Pause timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
     dom.btnStart.classList.add("running");
+    dom.btnReset.textContent = "Hold to reset";
+    dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+    dom.btnReset.classList.remove("btn-primary");
+    dom.btnReset.classList.add("btn-secondary");
+    dom.btnStart.classList.remove("btn-secondary");
+    dom.btnStart.classList.add("btn-primary");
+    dom.timerActions.classList.remove("done");
     setPhase("prep");
     soundPrepTick();
     state.intervalId = setInterval(tick, 1000);
@@ -678,10 +697,21 @@
   });
   dom.btnStart.addEventListener("click", function () {
     haptic();
-    startStop();
+    if (state.setsRemaining <= 0 && !state.running) {
+      startWorkout();
+    } else {
+      startStop();
+    }
+  });
+  dom.btnReset.addEventListener("click", function () {
+    if (state.setsRemaining <= 0 && !state.running) {
+      haptic();
+      goToSettings(true);
+    }
   });
   dom.btnReset.addEventListener("pointerdown", function (e) {
     if (e.button !== 0) return;
+    if (state.setsRemaining <= 0 && !state.running) return;
     haptic();
     clearResetHold();
     dom.btnReset.classList.add("holding");

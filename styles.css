@@ -633,6 +633,13 @@ body::before {
   min-width: 120px;
 }
 
+.timer-actions.done #btn-reset {
+  order: 2;
+}
+.timer-actions.done #btn-start {
+  order: 1;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.75rem;
