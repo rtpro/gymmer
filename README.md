@@ -32,3 +32,4 @@ npx serve .
 1. Open the app (GitHub Pages URL or local server) in Chrome.
 2. Menu (⋮) → **Add to Home screen** or **Install app**.
 3. Use the icon like a normal app; it runs in a browser window without the address bar.
+ 
