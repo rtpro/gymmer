@@ -472,18 +472,18 @@ body::before {
   gap: 0.5rem;
 }
 
-/* Work: same row style as Sets (2 options) */
-.preset-buttons:has(.preset-btn[data-target="work"]) {
-  grid-template-columns: repeat(2, 1fr);
+/* Work: 2 presets + custom input inline */
+.preset-buttons-work {
+  grid-template-columns: 1fr 1fr minmax(4rem, 1fr);
 }
 
 .preset-buttons-sets {
   grid-template-columns: repeat(5, 1fr);
 }
 
-/* Rest: same grid style as Sets (no scroll) */
+/* Rest: 3 columns + custom input inline */
 .preset-buttons-rest {
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .preset-btn {
@@ -545,6 +545,32 @@ body::before {
 
 .preset-btn:active {
   transform: scale(0.98);
+}
+
+.custom-time-input {
+  min-height: var(--tap-min);
+  min-width: var(--tap-min);
+  padding: 0 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-soft);
+  border: 1px solid var(--surface-hover);
+  border-radius: 0.65rem;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.custom-time-input:focus {
+  outline: none;
+  border-color: var(--text-muted);
+  box-shadow: 0 0 0 2px rgba(139, 149, 168, 0.2);
+}
+
+.custom-time-input::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
 }
 
 .completions-section {

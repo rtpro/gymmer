@@ -62,6 +62,8 @@
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
+    customWork: document.getElementById("custom-work"),
+    customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
@@ -171,6 +173,28 @@
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return m > 0 ? `${m}:${String(s).padStart(2, "0")}` : String(s);
+  }
+
+  function formatTimeForInput(seconds) {
+    if (seconds < 60) return String(seconds);
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function parseTimeInput(str) {
+    if (!str || typeof str !== "string") return null;
+    const trimmed = str.trim();
+    if (!trimmed) return null;
+    const colonIdx = trimmed.indexOf(":");
+    if (colonIdx >= 0) {
+      const m = parseInt(trimmed.slice(0, colonIdx), 10);
+      const s = parseInt(trimmed.slice(colonIdx + 1), 10);
+      if (isNaN(m) || isNaN(s) || m < 0 || s < 0 || s >= 60) return null;
+      return m * 60 + s;
+    }
+    const n = parseInt(trimmed, 10);
+    return isNaN(n) || n < 1 ? null : n;
   }
 
   function setTimerValue(str) {
@@ -539,6 +563,7 @@
     state.phase = "work";
     state.remainingSeconds = state.workSeconds;
     state.selectedWorkoutPreset = null;
+    syncCustomInputs();
     dom.btnStart.textContent = "Start";
     dom.btnStart.setAttribute("aria-label", "Start timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
@@ -549,18 +574,23 @@
     showView("settings");
   }
 
+  const MIN_SECONDS = 1;
+  const MAX_SECONDS = 600;
+
   function applyPreset(target, seconds) {
     if (state.running) return;
     state.selectedWorkoutPreset = null;
+    const clamped = Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, seconds));
     if (target === "work") {
-      state.workSeconds = seconds;
-      if (state.phase === "work") state.remainingSeconds = seconds;
+      state.workSeconds = clamped;
+      if (state.phase === "work") state.remainingSeconds = clamped;
     } else {
-      state.restSeconds = seconds;
-      if (state.phase === "rest") state.remainingSeconds = seconds;
+      state.restSeconds = clamped;
+      if (state.phase === "rest") state.remainingSeconds = clamped;
     }
     setTimerValue(formatTime(state.remainingSeconds));
     syncPresetActiveStates();
+    syncCustomInputs();
   }
 
   function applySets(total) {
@@ -576,14 +606,15 @@
     if (state.running) return;
     state.totalSets = sets;
     state.setsRemaining = sets;
-    state.workSeconds = workSeconds;
-    state.restSeconds = restSeconds;
+    state.workSeconds = Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, workSeconds));
+    state.restSeconds = Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, restSeconds));
     state.selectedWorkoutPreset = presetId != null ? presetId : null;
-    if (state.phase === "work") state.remainingSeconds = workSeconds;
-    if (state.phase === "rest") state.remainingSeconds = restSeconds;
+    if (state.phase === "work") state.remainingSeconds = state.workSeconds;
+    if (state.phase === "rest") state.remainingSeconds = state.restSeconds;
     setTimerValue(formatTime(state.remainingSeconds));
     updateSetDisplay();
     syncPresetActiveStates();
+    syncCustomInputs();
   }
 
   function syncPresetActiveStates() {
@@ -602,6 +633,22 @@
     });
   }
 
+  function syncCustomInputs() {
+    if (dom.customWork && document.activeElement !== dom.customWork) {
+      dom.customWork.value = formatTimeForInput(state.workSeconds);
+    }
+    if (dom.customRest && document.activeElement !== dom.customRest) {
+      dom.customRest.value = formatTimeForInput(state.restSeconds);
+    }
+  }
+
+  function applyCustomTime(target, seconds) {
+    if (state.running) return;
+    const val = parseTimeInput(String(seconds));
+    if (val == null) return;
+    applyPreset(target, val);
+  }
+
   function onTimerDisplayClick() {
     if (state.setsRemaining <= 0) return;
     startStop();
@@ -612,6 +659,7 @@
   updateSetDisplay();
   renderCompletions();
   syncPresetActiveStates();
+  syncCustomInputs();
 
   const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
@@ -676,6 +724,37 @@
       );
     });
   });
+
+  function handleCustomTimeInput(inputEl, target) {
+    const val = parseTimeInput(inputEl.value);
+    if (val != null) {
+      applyCustomTime(target, val);
+      haptic();
+    } else if (inputEl.value.trim() !== "") {
+      syncCustomInputs();
+    }
+  }
+
+  if (dom.customWork) {
+    dom.customWork.addEventListener("blur", function () {
+      handleCustomTimeInput(dom.customWork, "work");
+    });
+    dom.customWork.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        dom.customWork.blur();
+      }
+    });
+  }
+  if (dom.customRest) {
+    dom.customRest.addEventListener("blur", function () {
+      handleCustomTimeInput(dom.customRest, "rest");
+    });
+    dom.customRest.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        dom.customRest.blur();
+      }
+    });
+  }
   dom.btnClearHistory.addEventListener("click", function () {
     haptic();
     clearHistory();

@@ -67,9 +67,10 @@
           </div>
           <div class="presets">
             <label class="preset-label">Work</label>
-            <div class="preset-buttons" role="group" aria-label="Work duration">
+            <div class="preset-buttons preset-buttons-work" role="group" aria-label="Work duration">
               <button type="button" class="preset-btn active" data-target="work" data-seconds="30">30s</button>
               <button type="button" class="preset-btn" data-target="work" data-seconds="45">45s</button>
+              <input type="text" id="custom-work" class="custom-time-input" inputmode="numeric" placeholder="Custom" aria-label="Custom work duration" />
             </div>
           </div>
           <div class="presets">
@@ -80,7 +81,7 @@
               <button type="button" class="preset-btn" data-target="rest" data-seconds="120">2m</button>
               <button type="button" class="preset-btn" data-target="rest" data-seconds="150">2:30</button>
               <button type="button" class="preset-btn" data-target="rest" data-seconds="180">3m</button>
-              <button type="button" class="preset-btn" data-target="rest" data-seconds="210">3:30</button>
+              <input type="text" id="custom-rest" class="custom-time-input" inputmode="numeric" placeholder="Custom" aria-label="Custom rest duration" />
             </div>
           </div>
           <button type="button" class="btn btn-primary btn-start-workout" id="btn-start-workout" aria-label="Start workout">Start workout</button>
