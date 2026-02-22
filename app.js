@@ -8,6 +8,7 @@
 
   const PREP_SECONDS = 3;
   const STORAGE_KEY = "gymmer_completions";
+  const SESSION_KEY = "gymmer_session_v1";
   const MAX_COMPLETIONS = 50;
 
   const state = {
@@ -19,6 +20,7 @@
     restPhasesCompleted: 0,
     phase: "work",
     remainingSeconds: 30,
+    phaseEndTimestamp: 0,
     running: false,
     intervalId: null,
     selectedWorkoutPreset: null,
@@ -109,6 +111,142 @@
     } catch (_) {}
   }
 
+  function saveSessionState() {
+    const session = {
+      workSeconds: state.workSeconds,
+      restSeconds: state.restSeconds,
+      totalSets: state.totalSets,
+      setsRemaining: state.setsRemaining,
+      workPhasesCompleted: state.workPhasesCompleted,
+      restPhasesCompleted: state.restPhasesCompleted,
+      phase: state.phase,
+      remainingSeconds: state.remainingSeconds,
+      phaseEndTimestamp: state.phaseEndTimestamp,
+      running: state.running,
+      selectedWorkoutPreset: state.selectedWorkoutPreset,
+    };
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } catch (_) {}
+  }
+
+  function clearSessionState() {
+    try {
+      localStorage.removeItem(SESSION_KEY);
+    } catch (_) {}
+  }
+
+  function restoreSessionState() {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(SESSION_KEY);
+    } catch (_) {
+      return false;
+    }
+    if (!raw) return false;
+
+    let saved = null;
+    try {
+      saved = JSON.parse(raw);
+    } catch (_) {
+      clearSessionState();
+      return false;
+    }
+    if (!saved || typeof saved !== "object") return false;
+
+    const parsed = {
+      workSeconds: parseInt(saved.workSeconds, 10),
+      restSeconds: parseInt(saved.restSeconds, 10),
+      totalSets: parseInt(saved.totalSets, 10),
+      setsRemaining: parseInt(saved.setsRemaining, 10),
+      workPhasesCompleted: parseInt(saved.workPhasesCompleted, 10),
+      restPhasesCompleted: parseInt(saved.restPhasesCompleted, 10),
+      remainingSeconds: parseInt(saved.remainingSeconds, 10),
+      phaseEndTimestamp: parseInt(saved.phaseEndTimestamp, 10),
+      phase: saved.phase,
+      running: !!saved.running,
+      selectedWorkoutPreset: saved.selectedWorkoutPreset != null ? String(saved.selectedWorkoutPreset) : null,
+    };
+
+    if (
+      isNaN(parsed.workSeconds) ||
+      isNaN(parsed.restSeconds) ||
+      isNaN(parsed.totalSets) ||
+      isNaN(parsed.setsRemaining) ||
+      isNaN(parsed.workPhasesCompleted) ||
+      isNaN(parsed.restPhasesCompleted) ||
+      isNaN(parsed.remainingSeconds) ||
+      !parsed.phase ||
+      !["prep", "work", "rest"].includes(parsed.phase)
+    ) {
+      clearSessionState();
+      return false;
+    }
+
+    state.workSeconds = Math.max(1, parsed.workSeconds);
+    state.restSeconds = Math.max(1, parsed.restSeconds);
+    state.totalSets = Math.max(1, parsed.totalSets);
+    state.setsRemaining = Math.max(0, parsed.setsRemaining);
+    state.workPhasesCompleted = Math.max(0, parsed.workPhasesCompleted);
+    state.restPhasesCompleted = Math.max(0, parsed.restPhasesCompleted);
+    state.phase = parsed.phase;
+    state.remainingSeconds = Math.max(0, parsed.remainingSeconds);
+    state.phaseEndTimestamp = isNaN(parsed.phaseEndTimestamp) ? 0 : parsed.phaseEndTimestamp;
+    state.running = parsed.running;
+    state.selectedWorkoutPreset = parsed.selectedWorkoutPreset;
+
+    if (state.phase === "work") {
+      dom.phaseBadge.textContent = "Work";
+      dom.phaseBadge.className = "phase-badge work";
+      dom.timerDisplay.className = "timer-display work";
+      dom.timerValue.classList.remove("done-text");
+      setTimerValue(formatTime(state.remainingSeconds));
+    } else if (state.phase === "rest") {
+      dom.phaseBadge.textContent = "Rest";
+      dom.phaseBadge.className = "phase-badge rest";
+      dom.timerDisplay.className = "timer-display rest";
+      dom.timerValue.classList.remove("done-text");
+      setTimerValue(formatTime(state.remainingSeconds));
+    } else {
+      dom.phaseBadge.textContent = "Get ready";
+      dom.phaseBadge.className = "phase-badge prep";
+      dom.timerDisplay.className = "timer-display prep";
+      dom.timerValue.classList.remove("done-text");
+      setTimerValue(String(state.remainingSeconds));
+    }
+
+    dom.btnReset.textContent = "Hold to reset";
+    dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+    dom.btnReset.classList.remove("btn-primary");
+    dom.btnReset.classList.add("btn-secondary");
+    dom.timerActions.classList.remove("done");
+
+    if (state.setsRemaining <= 0) {
+      updateSetDisplay();
+      return true;
+    }
+
+    if (state.running) {
+      dom.btnStart.textContent = "Pause";
+      dom.btnStart.setAttribute("aria-label", "Pause timer");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
+      dom.btnStart.classList.add("running");
+      applyPausedUI(false);
+      syncTimerFromTimestamp();
+      if (state.running && !state.intervalId) {
+        state.intervalId = setInterval(tick, 1000);
+      }
+    } else {
+      dom.btnStart.textContent = "Resume";
+      dom.btnStart.setAttribute("aria-label", "Resume timer");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
+      dom.btnStart.classList.remove("running");
+      applyPausedUI(true);
+      updateProgressRing();
+    }
+    return true;
+  }
+
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
     list.unshift({
@@ -128,6 +266,7 @@
     const w = state.workPhasesCompleted;
     const r = state.restPhasesCompleted;
     if (w > 0 || r > 0) saveCompletion(w, r, false);
+    clearSessionState();
   }
 
   function formatDuration(seconds) {
@@ -211,6 +350,64 @@
     return state.phase === "work" ? state.workSeconds : state.restSeconds;
   }
 
+  function setPhaseEndTimestamp() {
+    state.phaseEndTimestamp = Date.now() + state.remainingSeconds * 1000;
+    saveSessionState();
+  }
+
+  function processPhaseEnd(skipAnimation) {
+    if (state.phase === "prep") {
+      setPhase("work");
+      updateProgressRing();
+      soundBeginWork();
+      haptic();
+      return;
+    }
+    if (state.intervalId) {
+      clearInterval(state.intervalId);
+      state.intervalId = null;
+    }
+    if (state.phase === "work" && !skipAnimation) {
+      soundSetComplete();
+      showPhaseEndAnimation("Set complete", "set-complete", function () {
+        switchPhase();
+        state.intervalId = setInterval(tick, 1000);
+      });
+      return;
+    }
+    if (state.phase === "rest" && !skipAnimation) {
+      soundBeginWork();
+      showPhaseEndAnimation("Work!", "work", function () {
+        switchPhase();
+        state.intervalId = setInterval(tick, 1000);
+      });
+      return;
+    }
+    switchPhase();
+    if (state.running) {
+      state.intervalId = setInterval(tick, 1000);
+    }
+  }
+
+  function syncTimerFromTimestamp() {
+    if (!state.running) return;
+    if (phaseEndTimeoutId) return;
+    while (state.running && state.phaseEndTimestamp && Date.now() >= state.phaseEndTimestamp) {
+      processPhaseEnd(true);
+      if (!state.running) return;
+    }
+    if (state.running) {
+      state.remainingSeconds = Math.max(0, Math.ceil((state.phaseEndTimestamp - Date.now()) / 1000));
+      if (state.phase === "prep") {
+        setTimerValue(String(state.remainingSeconds));
+      } else {
+        setTimerValue(formatTime(state.remainingSeconds));
+      }
+      updateProgressRing();
+      saveSessionState();
+    }
+  }
+
   function updateProgressRing() {
     const total = getPhaseTotalSeconds();
     const p = total > 0 ? state.remainingSeconds / total : 0;
@@ -234,8 +431,10 @@
       dom.timerValue.classList.remove("done-text");
       setTimerValue(formatTime(state.remainingSeconds));
     }
+    setPhaseEndTimestamp();
     dom.timerDisplay.classList.remove("done");
     updateProgressRing();
+    saveSessionState();
   }
 
   const PHASE_END_DURATION_MS = 1200;
@@ -269,46 +468,10 @@
   }
 
   function tick() {
+    state.remainingSeconds = Math.max(0, Math.ceil((state.phaseEndTimestamp - Date.now()) / 1000));
     if (state.remainingSeconds <= 0) {
-      if (state.phase === "prep") {
-        setPhase("work");
-        updateProgressRing();
-        soundBeginWork();
-        haptic();
-        return;
-      }
-      switchPhase();
+      processPhaseEnd(false);
       return;
-    }
-    state.remainingSeconds -= 1;
-    if (state.remainingSeconds <= 0) {
-      if (state.phase === "prep") {
-        setPhase("work");
-        updateProgressRing();
-        soundBeginWork();
-        haptic();
-        return;
-      }
-      if (state.intervalId) {
-        clearInterval(state.intervalId);
-        state.intervalId = null;
-      }
-      if (state.phase === "work") {
-        soundSetComplete();
-        showPhaseEndAnimation("Set complete", "set-complete", function () {
-          switchPhase();
-          state.intervalId = setInterval(tick, 1000);
-        });
-        return;
-      }
-      if (state.phase === "rest") {
-        soundBeginWork();
-        showPhaseEndAnimation("Work!", "work", function () {
-          switchPhase();
-          state.intervalId = setInterval(tick, 1000);
-        });
-        return;
-      }
     }
     if (state.phase === "prep") {
       soundPrepTick();
@@ -320,6 +483,7 @@
       setTimerValue(formatTime(state.remainingSeconds));
     }
     updateProgressRing();
+    saveSessionState();
   }
 
   let audioCtx = null;
@@ -463,6 +627,7 @@
     dom.btnStart.setAttribute("aria-label", "Start timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
     dom.btnStart.classList.remove("running");
+    saveSessionState();
   }
 
   function switchPhase() {
@@ -522,11 +687,13 @@
     dom.btnStart.setAttribute("aria-label", "Resume timer");
     dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
     dom.btnStart.classList.remove("running");
+    saveSessionState();
   }
 
   function resumeTimer() {
     if (state.running) return;
     state.running = true;
+    setPhaseEndTimestamp();
     requestWakeLock();
     applyPausedUI(false);
     dom.btnStart.textContent = "Pause";
@@ -534,6 +701,7 @@
     dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
     dom.btnStart.classList.add("running");
     state.intervalId = setInterval(tick, 1000);
+    saveSessionState();
   }
 
   function startWorkout() {
@@ -557,6 +725,7 @@
     setPhase("prep");
     soundPrepTick();
     state.intervalId = setInterval(tick, 1000);
+    saveSessionState();
   }
 
   function startStop() {
@@ -591,6 +760,7 @@
     setPhase("work");
     updateSetDisplay();
     showView("settings");
+    clearSessionState();
   }
 
   const MIN_SECONDS = 1;
@@ -610,6 +780,7 @@
     setTimerValue(formatTime(state.remainingSeconds));
     syncPresetActiveStates();
     syncCustomInputs();
+    saveSessionState();
   }
 
   function applySets(total) {
@@ -619,6 +790,7 @@
     state.selectedWorkoutPreset = null;
     updateSetDisplay();
     syncPresetActiveStates();
+    saveSessionState();
   }
 
   function applyWorkoutPreset(sets, workSeconds, restSeconds, presetId) {
@@ -634,6 +806,7 @@
     updateSetDisplay();
     syncPresetActiveStates();
     syncCustomInputs();
+    saveSessionState();
   }
 
   function syncPresetActiveStates() {
@@ -674,11 +847,17 @@
   }
 
   // Initial UI
-  setPhase("work");
-  updateSetDisplay();
-  renderCompletions();
+  const restoredSession = restoreSessionState();
+  if (!restoredSession) {
+    setPhase("work");
+    updateSetDisplay();
+  } else {
+    goToTimer();
+    updateSetDisplay();
+  }
   syncPresetActiveStates();
   syncCustomInputs();
+  renderCompletions();
 
   const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
@@ -799,10 +978,20 @@
   });
 
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "visible") {
-      if (state.running) requestWakeLock();
-    } else if (document.visibilityState === "hidden" && state.running) {
-      pauseTimer();
+    if (state.running) {
+      if (document.visibilityState === "visible") {
+        requestWakeLock();
+        syncTimerFromTimestamp();
+      } else {
+        saveSessionState();
+      }
+    }
+  });
+
+  window.addEventListener("pageshow", function () {
+    if (state.running) {
+      syncTimerFromTimestamp();
+      if (!state.intervalId) state.intervalId = setInterval(tick, 1000);
     }
   });
 
