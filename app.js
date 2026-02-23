@@ -371,7 +371,9 @@
       soundSetComplete();
       showPhaseEndAnimation("Set complete", "set-complete", function () {
         switchPhase();
-        state.intervalId = setInterval(tick, 1000);
+        if (state.running) {
+          state.intervalId = setInterval(tick, 1000);
+        }
       });
       return;
     }
@@ -379,7 +381,9 @@
       soundBeginWork();
       showPhaseEndAnimation("Work!", "work", function () {
         switchPhase();
-        state.intervalId = setInterval(tick, 1000);
+        if (state.running) {
+          state.intervalId = setInterval(tick, 1000);
+        }
       });
       return;
     }
