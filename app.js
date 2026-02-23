@@ -865,11 +865,21 @@
 
   const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
+  let resetHoldPointerId = null;
 
-  function clearResetHold() {
+  function clearResetHold(pointerId) {
+    if (pointerId != null && resetHoldPointerId != null && pointerId !== resetHoldPointerId) return;
     if (resetHoldTimer) {
       clearTimeout(resetHoldTimer);
       resetHoldTimer = null;
+    }
+    if (resetHoldPointerId != null) {
+      try {
+        if (dom.btnReset.hasPointerCapture(resetHoldPointerId)) {
+          dom.btnReset.releasePointerCapture(resetHoldPointerId);
+        }
+      } catch (_) {}
+      resetHoldPointerId = null;
     }
     dom.btnReset.classList.remove("holding");
   }
@@ -895,18 +905,28 @@
   dom.btnReset.addEventListener("pointerdown", function (e) {
     if (e.button !== 0) return;
     if (state.setsRemaining <= 0 && !state.running) return;
+    if (resetHoldPointerId != null) return;
     haptic();
     clearResetHold();
+    resetHoldPointerId = e.pointerId;
+    try {
+      dom.btnReset.setPointerCapture(e.pointerId);
+    } catch (_) {}
     dom.btnReset.classList.add("holding");
     resetHoldTimer = setTimeout(function () {
-      resetHoldTimer = null;
-      dom.btnReset.classList.remove("holding");
+      clearResetHold();
       reset();
     }, RESET_HOLD_MS);
   });
-  dom.btnReset.addEventListener("pointerup", clearResetHold);
-  dom.btnReset.addEventListener("pointercancel", clearResetHold);
-  dom.btnReset.addEventListener("pointerleave", clearResetHold);
+  dom.btnReset.addEventListener("pointerup", function (e) {
+    clearResetHold(e.pointerId);
+  });
+  dom.btnReset.addEventListener("pointercancel", function (e) {
+    clearResetHold(e.pointerId);
+  });
+  dom.btnReset.addEventListener("lostpointercapture", function (e) {
+    clearResetHold(e.pointerId);
+  });
   dom.btnReset.addEventListener("contextmenu", function (e) {
     e.preventDefault();
   });

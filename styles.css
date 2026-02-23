@@ -9,9 +9,9 @@
   --work: #e84c4c;
   --work-dim: rgba(232, 76, 76, 0.18);
   --work-ring: rgba(232, 76, 76, 0.5);
-  --rest: #5b8def;
-  --rest-dim: rgba(91, 141, 239, 0.18);
-  --rest-ring: rgba(91, 141, 239, 0.5);
+  --rest: #78acff;
+  --rest-dim: rgba(120, 172, 255, 0.2);
+  --rest-ring: rgba(120, 172, 255, 0.58);
   --prep: #e8a83e;
   --prep-dim: rgba(232, 168, 62, 0.18);
   --prep-ring: rgba(232, 168, 62, 0.5);
@@ -54,7 +54,7 @@ body::before {
   inset: 0;
   background:
     radial-gradient(ellipse 100% 70% at 50% -10%, rgba(232, 76, 76, 0.05) 0%, transparent 45%),
-    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(91, 141, 239, 0.06) 0%, transparent 50%);
+    radial-gradient(ellipse 70% 50% at 50% 110%, rgba(120, 172, 255, 0.08) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -353,7 +353,7 @@ body::before {
 }
 
 .timer-display.rest {
-  background: linear-gradient(165deg, var(--rest-dim) 0%, rgba(91, 141, 239, 0.06) 50%);
+  background: linear-gradient(165deg, var(--rest-dim) 0%, rgba(120, 172, 255, 0.08) 50%);
   box-shadow: 0 0 0 2px var(--rest-ring), inset 0 2px 16px rgba(0, 0, 0, 0.15);
   color: var(--rest);
 }
@@ -699,6 +699,10 @@ body::before {
 
 .btn-secondary.holding {
   position: relative;
+}
+
+#btn-reset {
+  touch-action: none;
 }
 
 /* Progress bar above the button so it’s not hidden by the finger */
