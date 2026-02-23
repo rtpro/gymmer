@@ -32,4 +32,20 @@ npx serve .
 1. Open the app (GitHub Pages URL or local server) in Chrome.
 2. Menu (⋮) → **Add to Home screen** or **Install app**.
 3. Use the icon like a normal app; it runs in a browser window without the address bar.
+
+## Feature safety workflow
+
+To reduce regressions when changing code:
+
+1. Review `/Users/arthurberezin/Documents/gymmer/FEATURES.md` before editing.
+2. Run the automated smoke check:
+
+```bash
+/Users/arthurberezin/Documents/gymmer/scripts/feature_smoke_check.sh
+```
+
+3. Run the manual regression checklist in `/Users/arthurberezin/Documents/gymmer/FEATURES.md` for impacted areas.
+4. If behavior changes intentionally, update `/Users/arthurberezin/Documents/gymmer/FEATURES.md` in the same change.
+
+Repository-level guard instructions live in `/Users/arthurberezin/Documents/gymmer/AGENTS.md`.
  
