@@ -282,22 +282,43 @@
     if (list.length === 0) {
       const li = document.createElement("li");
       li.className = "completion-item completion-item-empty";
-      li.textContent = "No completions yet";
+      li.innerHTML = "<span class=\"completion-empty-icon\" aria-hidden=\"true\">🗓️</span><span>No workouts yet</span><small>Complete one session and it will appear here.</small>";
       dom.completionsList.appendChild(li);
     } else {
+      const now = new Date();
       list.forEach(function (entry) {
         const d = new Date(entry.date);
-        const dateStr = d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: d.getFullYear() !== new Date().getFullYear() ? "numeric" : undefined });
+        const dateStr = d.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+        });
+        const timeStr = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
         const workStr = formatDuration(entry.workSeconds);
         const restStr = formatDuration(entry.restSeconds);
         const w = entry.completedWork != null ? entry.completedWork : entry.sets;
         const r = entry.completedRest != null ? entry.completedRest : entry.sets;
-        const summary = (entry.full || (entry.completedWork == null && entry.sets != null))
-          ? w + " sets"
-          : w + " work, " + r + " rest";
+        const total = entry.totalSets != null ? entry.totalSets : entry.sets;
+        const isFull = !!(entry.full || (entry.completedWork == null && entry.sets != null));
+
+        const summary = isFull
+          ? w + " sets completed"
+          : w + " work / " + r + " rest" + (total != null ? " of " + total : "");
+        const statusClass = isFull ? "is-full" : "is-partial";
+        const statusLabel = isFull ? "Completed" : "Partial";
+
         const li = document.createElement("li");
         li.className = "completion-item";
-        li.textContent = summary + " · " + workStr + " work · " + restStr + " rest · " + dateStr;
+        li.innerHTML =
+          "<div class=\"completion-top\">" +
+            "<span class=\"completion-summary\">" + summary + "</span>" +
+            "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
+          "</div>" +
+          "<div class=\"completion-meta\">" +
+            "<span>Work " + workStr + "</span>" +
+            "<span>Rest " + restStr + "</span>" +
+            "<span>" + dateStr + " · " + timeStr + "</span>" +
+          "</div>";
         dom.completionsList.appendChild(li);
       });
     }
