@@ -249,6 +249,11 @@
 
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
+    const selectedBtn = state.selectedWorkoutPreset
+      ? document.querySelector('.preset-btn-workout[data-preset="' + state.selectedWorkoutPreset + '"]')
+      : null;
+    const bodyPart = selectedBtn ? selectedBtn.textContent.trim() : null;
+
     list.unshift({
       date: new Date().toISOString(),
       workSeconds: state.workSeconds,
@@ -257,6 +262,8 @@
       completedRest: completedRest,
       totalSets: state.totalSets,
       full: !!full,
+      workoutPreset: state.selectedWorkoutPreset,
+      bodyPart: bodyPart,
     });
     saveCompletions(list.slice(0, MAX_COMPLETIONS));
     renderCompletions();
@@ -306,6 +313,7 @@
           : w + " work / " + r + " rest" + (total != null ? " of " + total : "");
         const statusClass = isFull ? "is-full" : "is-partial";
         const statusLabel = isFull ? "Completed" : "Partial";
+        const bodyPart = entry.bodyPart || (entry.workoutPreset ? (entry.workoutPreset.charAt(0).toUpperCase() + entry.workoutPreset.slice(1)) : null);
 
         const li = document.createElement("li");
         li.className = "completion-item";
@@ -315,6 +323,7 @@
             "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
           "</div>" +
           "<div class=\"completion-meta\">" +
+            (bodyPart ? "<span class=\"completion-body-part\">" + bodyPart + "</span>" : "") +
             "<span>Work " + workStr + "</span>" +
             "<span>Rest " + restStr + "</span>" +
             "<span>" + dateStr + " · " + timeStr + "</span>" +
