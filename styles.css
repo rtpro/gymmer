@@ -532,8 +532,13 @@ body::before {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
-  font-size: 1.1rem;
   line-height: 1;
+}
+
+.preset-btn-workout .preset-icon svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  opacity: 0.92;
 }
 
 .preset-btn-workout.active {

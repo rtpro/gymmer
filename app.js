@@ -11,6 +11,16 @@
   const SESSION_KEY = "gymmer_session_v1";
   const MAX_COMPLETIONS = 50;
 
+  const BODY_PART_META = {
+    chest: { label: "Chest", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 17v-2.4c0-1 .4-1.9 1.1-2.5l1.2-1c1-.8 1.6-2 1.6-3.3V6.5c0-1.4-1.1-2.5-2.5-2.5S6 5.1 6 6.5V9\"/><path d=\"M17 17v-2.4c0-1-.4-1.9-1.1-2.5l-1.2-1c-1-.8-1.6-2-1.6-3.3V6.5c0-1.4 1.1-2.5 2.5-2.5S18 5.1 18 6.5V9\"/><path d=\"M7 17h10\"/><path d=\"M9.5 20h5\"/></svg>" },
+    arms: { label: "Arms", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 15c1.4 0 2.5-1.1 2.5-2.5V10\"/><path d=\"M8.5 10h2.2c1.3 0 2.3 1 2.3 2.3V13\"/><path d=\"M13 13h2.4c1.4 0 2.6 1.2 2.6 2.6S16.8 18 15.4 18H10a4 4 0 0 1-4-4v-1\"/><path d=\"M9 10V7.8c0-.9.7-1.6 1.6-1.6H12\"/></svg>" },
+    abs: { label: "Abs", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"4\" width=\"6\" height=\"16\" rx=\"2.2\"/><path d=\"M9 9h6\"/><path d=\"M9 14h6\"/><path d=\"M12 4v16\"/></svg>" },
+    back: { label: "Back", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M8 6.5C8 5.1 9.1 4 10.5 4h3C14.9 4 16 5.1 16 6.5V8\"/><path d=\"M7.5 20V12c0-1.6 1.3-3 3-3h3c1.7 0 3 1.4 3 3v8\"/><path d=\"M10 12v8\"/><path d=\"M14 12v8\"/></svg>" },
+    legs: { label: "Legs", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 4v7.5L7 20\"/><path d=\"M15 4v7.5l2 8.5\"/><path d=\"M6.2 20h3.6\"/><path d=\"M14.2 20h3.6\"/></svg>" },
+    delts: { label: "Shoulders", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M6 12a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4\"/><path d=\"M6 12v4\"/><path d=\"M18 12v4\"/><path d=\"M10 8V6.5A1.5 1.5 0 0 1 11.5 5h1A1.5 1.5 0 0 1 14 6.5V8\"/></svg>" },
+    custom: { label: "Custom", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v8\"/><path d=\"M8 12h8\"/></svg>" },
+  };
+
   const state = {
     workSeconds: 30,
     restSeconds: 60,
@@ -109,6 +119,20 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     } catch (_) {}
+  }
+
+  function getBodyPartMeta(presetId) {
+    if (!presetId) return BODY_PART_META.custom;
+    return BODY_PART_META[presetId] || { label: presetId.charAt(0).toUpperCase() + presetId.slice(1), icon: BODY_PART_META.custom.icon };
+  }
+
+  function renderWorkoutPresetIcons() {
+    dom.workoutPresetBtns.forEach((btn) => {
+      const iconEl = btn.querySelector(".preset-icon");
+      if (!iconEl) return;
+      const meta = getBodyPartMeta(btn.dataset.preset);
+      iconEl.innerHTML = meta.icon;
+    });
   }
 
   function saveSessionState() {
@@ -249,10 +273,8 @@
 
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
-    const selectedBtn = state.selectedWorkoutPreset
-      ? document.querySelector('.preset-btn-workout[data-preset="' + state.selectedWorkoutPreset + '"]')
-      : null;
-    const bodyPart = selectedBtn ? selectedBtn.textContent.trim() : null;
+    const bodyPartMeta = getBodyPartMeta(state.selectedWorkoutPreset);
+    const bodyPart = bodyPartMeta ? bodyPartMeta.label : null;
 
     list.unshift({
       date: new Date().toISOString(),
@@ -313,7 +335,7 @@
           : w + " work / " + r + " rest" + (total != null ? " of " + total : "");
         const statusClass = isFull ? "is-full" : "is-partial";
         const statusLabel = isFull ? "Completed" : "Partial";
-        const bodyPart = entry.bodyPart || (entry.workoutPreset ? (entry.workoutPreset.charAt(0).toUpperCase() + entry.workoutPreset.slice(1)) : null);
+        const bodyPart = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : null);
 
         const li = document.createElement("li");
         li.className = "completion-item";
@@ -881,6 +903,7 @@
   }
 
   // Initial UI
+  renderWorkoutPresetIcons();
   const restoredSession = restoreSessionState();
   if (!restoredSession) {
     setPhase("work");
