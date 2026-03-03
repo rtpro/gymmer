@@ -90,6 +90,7 @@
     dom.viewSettings.classList.toggle("hidden", !isSettings);
     dom.viewTimer.classList.toggle("hidden", !isTimer);
     dom.viewHistory.classList.toggle("hidden", !isHistory);
+    document.body.classList.toggle("timer-mode", isTimer);
   }
 
   function goToSettings(skipSave) {
