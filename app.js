@@ -307,6 +307,16 @@
     return s === 0 ? m + "m" : m + ":" + String(s).padStart(2, "0");
   }
 
+  function isEntryFull(entry) {
+    if (!entry) return false;
+    if (entry.full === true) return true;
+    const total = entry.totalSets != null ? entry.totalSets : entry.sets;
+    const completedWork = entry.completedWork != null ? entry.completedWork : total;
+    const completedRest = entry.completedRest != null ? entry.completedRest : total;
+    if (total == null) return false;
+    return completedWork >= total && completedRest >= total;
+  }
+
   function renderHistoryInsights(list) {
     if (!dom.historyInsights) return;
     if (!list || list.length === 0) {
@@ -344,7 +354,7 @@
       bodyPartCounts[key] = (bodyPartCounts[key] || 0) + 1;
       bodyPartLastTs[key] = Math.max(bodyPartLastTs[key] || 0, ts);
 
-      if (entry.full) fullCount += 1;
+      if (isEntryFull(entry)) fullCount += 1;
 
       if (ts >= last7Start) {
         workoutsLast7.push(entry);
@@ -423,7 +433,7 @@
         const w = entry.completedWork != null ? entry.completedWork : entry.sets;
         const r = entry.completedRest != null ? entry.completedRest : entry.sets;
         const total = entry.totalSets != null ? entry.totalSets : entry.sets;
-        const isFull = !!(entry.full || (entry.completedWork == null && entry.sets != null));
+        const isFull = isEntryFull(entry);
 
         const summary = isFull
           ? w + " sets completed"
