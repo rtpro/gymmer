@@ -315,30 +315,88 @@
       return;
     }
 
+    const now = new Date();
+    const dayMs = 24 * 60 * 60 * 1000;
+    const last7Start = now.getTime() - (7 * dayMs);
+    const prev7Start = now.getTime() - (14 * dayMs);
+
     let totalSets = 0;
     let totalSeconds = 0;
+    let fullCount = 0;
     const bodyPartCounts = {};
+    const bodyPartLastTs = {};
+    const workoutDays7 = new Set();
+    const workoutsLast7 = [];
+    const workoutsPrev7 = [];
 
     list.forEach(function (entry) {
-      const completed = entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0);
-      totalSets += completed || 0;
-      totalSeconds += (entry.workSeconds || 0) * (entry.completedWork || 0);
-      totalSeconds += (entry.restSeconds || 0) * (entry.completedRest || 0);
+      const ts = new Date(entry.date).getTime();
+      if (isNaN(ts)) return;
+
+      const completedWork = entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0);
+      const completedRest = entry.completedRest != null ? entry.completedRest : completedWork;
+
+      totalSets += completedWork || 0;
+      totalSeconds += (entry.workSeconds || 0) * (completedWork || 0);
+      totalSeconds += (entry.restSeconds || 0) * (completedRest || 0);
 
       const key = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
       bodyPartCounts[key] = (bodyPartCounts[key] || 0) + 1;
+      bodyPartLastTs[key] = Math.max(bodyPartLastTs[key] || 0, ts);
+
+      if (entry.full) fullCount += 1;
+
+      if (ts >= last7Start) {
+        workoutsLast7.push(entry);
+        const d = new Date(ts);
+        workoutDays7.add(d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate());
+      } else if (ts >= prev7Start) {
+        workoutsPrev7.push(entry);
+      }
     });
 
     const topBodyPart = Object.keys(bodyPartCounts).sort(function (a, b) {
       return bodyPartCounts[b] - bodyPartCounts[a];
     })[0] || "Custom";
 
+    const completionRate = Math.round((fullCount / list.length) * 100);
+    const consistency = Math.min(100, Math.round((workoutDays7.size / 7) * 100));
+
+    const setsLast7 = workoutsLast7.reduce(function (sum, entry) {
+      return sum + (entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0) || 0);
+    }, 0);
+    const setsPrev7 = workoutsPrev7.reduce(function (sum, entry) {
+      return sum + (entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0) || 0);
+    }, 0);
+    const setsTrend = setsLast7 - setsPrev7;
+
+    const trackedBodyParts = ["Chest", "Back", "Legs", "Arms", "Delts", "Abs"];
+    const undertrained = trackedBodyParts
+      .map(function (name) {
+        const lastTs = bodyPartLastTs[name] || 0;
+        const days = lastTs ? Math.floor((now.getTime() - lastTs) / dayMs) : 999;
+        return { name: name, days: days };
+      })
+      .sort(function (a, b) { return b.days - a.days; })
+      .slice(0, 2)
+      .map(function (x) { return x.days >= 999 ? x.name + " (never)" : x.name + " (" + x.days + "d)"; })
+      .join(" • ");
+
+    const heatmapHtml = trackedBodyParts.map(function (name) {
+      const count = bodyPartCounts[name] || 0;
+      const max = Math.max(1, bodyPartCounts[topBodyPart] || 1);
+      const width = Math.max(8, Math.round((count / max) * 100));
+      return "<div class=\"insight-row\"><span>" + name + "</span><div class=\"insight-bar\"><i style=\"width:" + width + "%\"></i></div><b>" + count + "</b></div>";
+    }).join("");
+
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
-      "<div class=\"insight-pill\"><span>Workouts</span><strong>" + list.length + "</strong></div>" +
-      "<div class=\"insight-pill\"><span>Total sets</span><strong>" + totalSets + "</strong></div>" +
-      "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(totalSeconds) + "</strong></div>" +
-      "<div class=\"insight-pill\"><span>Top body part</span><strong>" + topBodyPart + "</strong></div>";
+      "<div class=\"insight-pill\"><span>Consistency (7d)</span><strong>" + consistency + "%</strong></div>" +
+      "<div class=\"insight-pill\"><span>Completion rate</span><strong>" + completionRate + "%</strong></div>" +
+      "<div class=\"insight-pill\"><span>Weekly volume</span><strong>" + setsLast7 + " sets</strong><small>" + (setsTrend >= 0 ? "+" : "") + setsTrend + " vs prev 7d</small></div>" +
+      "<div class=\"insight-pill\"><span>Top body part</span><strong>" + topBodyPart + "</strong><small>" + (bodyPartCounts[topBodyPart] || 0) + " workouts</small></div>" +
+      "<div class=\"coach-card\"><span>Undertrained</span><strong>" + undertrained + "</strong><small>Total time: " + formatDuration(totalSeconds) + " · Total sets: " + totalSets + "</small></div>" +
+      "<div class=\"insight-heatmap\">" + heatmapHtml + "</div>";
   }
 
   function renderCompletions() {

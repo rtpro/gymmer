@@ -180,7 +180,9 @@ body::before {
   display: none;
 }
 
-.insight-pill {
+.insight-pill,
+.coach-card,
+.insight-heatmap {
   background: rgba(139, 149, 168, 0.12);
   border: 1px solid rgba(139, 149, 168, 0.26);
   border-radius: 0.7rem;
@@ -190,16 +192,58 @@ body::before {
   gap: 0.15rem;
 }
 
-.insight-pill span {
+.coach-card,
+.insight-heatmap {
+  grid-column: 1 / -1;
+}
+
+.insight-pill span,
+.coach-card span {
   font-size: 0.68rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
 
-.insight-pill strong {
+.insight-pill strong,
+.coach-card strong {
   font-size: 0.92rem;
   color: var(--text);
+}
+
+.insight-pill small,
+.coach-card small {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.insight-row {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr 1.4rem;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.insight-bar {
+  height: 0.32rem;
+  border-radius: 999px;
+  background: rgba(139, 149, 168, 0.2);
+  overflow: hidden;
+}
+
+.insight-bar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, rgba(120, 172, 255, 0.8), rgba(232, 76, 76, 0.85));
+  border-radius: 999px;
+}
+
+.insight-row b {
+  text-align: right;
+  color: var(--text);
+  font-size: 0.72rem;
 }
 
 .view-history .completions-list {
