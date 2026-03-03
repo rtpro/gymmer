@@ -78,6 +78,7 @@
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
+    historyInsights: document.getElementById("history-insights"),
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
@@ -306,8 +307,43 @@
     return s === 0 ? m + "m" : m + ":" + String(s).padStart(2, "0");
   }
 
+  function renderHistoryInsights(list) {
+    if (!dom.historyInsights) return;
+    if (!list || list.length === 0) {
+      dom.historyInsights.innerHTML = "";
+      dom.historyInsights.classList.add("hidden");
+      return;
+    }
+
+    let totalSets = 0;
+    let totalSeconds = 0;
+    const bodyPartCounts = {};
+
+    list.forEach(function (entry) {
+      const completed = entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0);
+      totalSets += completed || 0;
+      totalSeconds += (entry.workSeconds || 0) * (entry.completedWork || 0);
+      totalSeconds += (entry.restSeconds || 0) * (entry.completedRest || 0);
+
+      const key = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
+      bodyPartCounts[key] = (bodyPartCounts[key] || 0) + 1;
+    });
+
+    const topBodyPart = Object.keys(bodyPartCounts).sort(function (a, b) {
+      return bodyPartCounts[b] - bodyPartCounts[a];
+    })[0] || "Custom";
+
+    dom.historyInsights.classList.remove("hidden");
+    dom.historyInsights.innerHTML =
+      "<div class=\"insight-pill\"><span>Workouts</span><strong>" + list.length + "</strong></div>" +
+      "<div class=\"insight-pill\"><span>Total sets</span><strong>" + totalSets + "</strong></div>" +
+      "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(totalSeconds) + "</strong></div>" +
+      "<div class=\"insight-pill\"><span>Top body part</span><strong>" + topBodyPart + "</strong></div>";
+  }
+
   function renderCompletions() {
     const list = getCompletions();
+    renderHistoryInsights(list);
     dom.completionsList.innerHTML = "";
     if (list.length === 0) {
       const li = document.createElement("li");
