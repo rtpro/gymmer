@@ -430,14 +430,17 @@
       return;
     }
     if (state.phase === "rest" && !skipAnimation) {
-      soundBeginWork();
-      showPhaseEndAnimation("Work!", "work", function () {
-        switchPhase();
-        if (state.running) {
-          state.intervalId = setInterval(tick, 1000);
-        }
-      });
-      return;
+      const hasAnotherSet = state.setsRemaining > 1;
+      if (hasAnotherSet) {
+        soundBeginWork();
+        showPhaseEndAnimation("Work!", "work", function () {
+          switchPhase();
+          if (state.running) {
+            state.intervalId = setInterval(tick, 1000);
+          }
+        });
+        return;
+      }
     }
     switchPhase();
     if (state.running) {
