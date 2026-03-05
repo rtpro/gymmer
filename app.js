@@ -932,6 +932,7 @@
 
   function applyPreset(target, seconds) {
     if (state.running) return;
+    const selectedPresetBefore = state.selectedWorkoutPreset;
     const clamped = Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, seconds));
     if (target === "work") {
       state.workSeconds = clamped;
@@ -940,6 +941,7 @@
       state.restSeconds = clamped;
       if (state.phase === "rest") state.remainingSeconds = clamped;
     }
+    state.selectedWorkoutPreset = selectedPresetBefore;
     setTimerValue(formatTime(state.remainingSeconds));
     syncPresetActiveStates();
     syncCustomInputs();
@@ -948,8 +950,10 @@
 
   function applySets(total) {
     if (state.running) return;
+    const selectedPresetBefore = state.selectedWorkoutPreset;
     state.totalSets = total;
     state.setsRemaining = total;
+    state.selectedWorkoutPreset = selectedPresetBefore;
     updateSetDisplay();
     syncPresetActiveStates();
     saveSessionState();
