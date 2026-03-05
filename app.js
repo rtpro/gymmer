@@ -38,7 +38,9 @@
 
   let wakeLockSentinel = null;
   const TIMER_NOTIFICATION_TAG = "gymmer-timer";
+  const TIMER_NOTIFICATION_UPDATE_MS = 5000;
   let lastTimerNotificationKey = "";
+  let lastTimerNotificationAt = 0;
 
   async function requestWakeLock() {
     if (!navigator.wakeLock) return;
@@ -99,6 +101,7 @@
         try { n.close(); } catch (_) {}
       });
       lastTimerNotificationKey = "";
+      lastTimerNotificationAt = 0;
     } catch (_) {}
   }
 
@@ -107,11 +110,16 @@
       closeTimerNotification();
       return;
     }
+    const now = Date.now();
+    if (!force && now - lastTimerNotificationAt < TIMER_NOTIFICATION_UPDATE_MS) return;
     const allowed = await ensureTimerNotificationPermission();
     if (!allowed) return;
     const text = getTimerNotificationText();
     const key = text;
-    if (!force && key === lastTimerNotificationKey) return;
+    if (!force && key === lastTimerNotificationKey) {
+      lastTimerNotificationAt = now;
+      return;
+    }
     try {
       const reg = await navigator.serviceWorker.getRegistration();
       if (!reg) return;
@@ -124,6 +132,7 @@
         data: { url: "./" },
       });
       lastTimerNotificationKey = key;
+      lastTimerNotificationAt = now;
     } catch (_) {}
   }
 
