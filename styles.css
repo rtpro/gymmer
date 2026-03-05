@@ -630,6 +630,35 @@ body::before {
   box-shadow: 0 0 0 1px rgba(139, 149, 168, 0.25);
 }
 
+.preset-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.preset-status {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.preset-clear-btn {
+  border: 1px solid rgba(139, 149, 168, 0.35);
+  background: rgba(139, 149, 168, 0.12);
+  color: var(--text);
+  border-radius: 999px;
+  min-height: 1.7rem;
+  padding: 0 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: inherit;
+}
+
+.preset-clear-btn.hidden {
+  display: none;
+}
+
 .preset-btn:active {
   transform: scale(0.98);
 }

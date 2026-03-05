@@ -152,6 +152,8 @@
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
+    presetStatus: document.getElementById("preset-status"),
+    btnClearWorkoutPreset: document.getElementById("btn-clear-workout-preset"),
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
@@ -212,6 +214,32 @@
       const meta = getBodyPartMeta(btn.dataset.preset);
       iconEl.innerHTML = meta.icon;
     });
+  }
+
+  function isSelectedWorkoutPresetModified() {
+    if (!state.selectedWorkoutPreset) return false;
+    const selectedBtn = Array.from(dom.workoutPresetBtns).find(function (btn) {
+      return btn.dataset.preset === state.selectedWorkoutPreset;
+    });
+    if (!selectedBtn) return false;
+    return (
+      parseInt(selectedBtn.dataset.sets, 10) !== state.totalSets ||
+      parseInt(selectedBtn.dataset.work, 10) !== state.workSeconds ||
+      parseInt(selectedBtn.dataset.rest, 10) !== state.restSeconds
+    );
+  }
+
+  function renderWorkoutPresetStatus() {
+    if (!dom.presetStatus || !dom.btnClearWorkoutPreset) return;
+    if (!state.selectedWorkoutPreset) {
+      dom.presetStatus.textContent = "Preset: Custom";
+      dom.btnClearWorkoutPreset.classList.add("hidden");
+      return;
+    }
+    const meta = getBodyPartMeta(state.selectedWorkoutPreset);
+    const modifiedSuffix = isSelectedWorkoutPresetModified() ? " (modified)" : "";
+    dom.presetStatus.textContent = "Preset: " + meta.label + modifiedSuffix;
+    dom.btnClearWorkoutPreset.classList.remove("hidden");
   }
 
   function saveSessionState() {
@@ -999,6 +1027,7 @@
     state.phase = "work";
     state.remainingSeconds = state.workSeconds;
     state.selectedWorkoutPreset = null;
+    syncPresetActiveStates();
     syncCustomInputs();
     dom.btnStart.textContent = "Start";
     dom.btnStart.setAttribute("aria-label", "Start timer");
@@ -1073,6 +1102,7 @@
     dom.workoutPresetBtns.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.preset === state.selectedWorkoutPreset);
     });
+    renderWorkoutPresetStatus();
   }
 
   function syncCustomInputs() {
@@ -1215,6 +1245,15 @@
       );
     });
   });
+  if (dom.btnClearWorkoutPreset) {
+    dom.btnClearWorkoutPreset.addEventListener("click", function () {
+      haptic();
+      if (!state.selectedWorkoutPreset) return;
+      state.selectedWorkoutPreset = null;
+      syncPresetActiveStates();
+      saveSessionState();
+    });
+  }
 
   function handleCustomTimeInput(inputEl, target) {
     const val = parseTimeInput(inputEl.value);
