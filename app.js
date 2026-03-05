@@ -37,6 +37,8 @@
   };
 
   let wakeLockSentinel = null;
+  const TIMER_NOTIFICATION_TAG = "gymmer-timer";
+  let lastTimerNotificationKey = "";
 
   async function requestWakeLock() {
     if (!navigator.wakeLock) return;
@@ -57,6 +59,72 @@
       } catch (_) {}
       wakeLockSentinel = null;
     }
+  }
+
+  function canUseTimerNotifications() {
+    return typeof window !== "undefined" && "Notification" in window && "serviceWorker" in navigator;
+  }
+
+  async function ensureTimerNotificationPermission() {
+    if (!canUseTimerNotifications()) return false;
+    if (Notification.permission === "granted") return true;
+    if (Notification.permission !== "default") return false;
+    try {
+      const perm = await Notification.requestPermission();
+      return perm === "granted";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function getCurrentSetIndex() {
+    const completed = state.totalSets - state.setsRemaining;
+    return Math.min(state.totalSets, completed + 1);
+  }
+
+  function getTimerNotificationText() {
+    if (state.setsRemaining <= 0) return "Done";
+    const phaseLabel = state.phase === "prep" ? "Get ready" : state.phase === "work" ? "Work" : "Rest";
+    const timeText = state.phase === "prep" ? String(state.remainingSeconds) + "s" : formatTime(state.remainingSeconds);
+    return phaseLabel + " • " + timeText + " left • Set " + getCurrentSetIndex() + "/" + state.totalSets;
+  }
+
+  async function closeTimerNotification() {
+    if (!canUseTimerNotifications()) return;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
+      const existing = await reg.getNotifications({ tag: TIMER_NOTIFICATION_TAG });
+      existing.forEach(function (n) {
+        try { n.close(); } catch (_) {}
+      });
+      lastTimerNotificationKey = "";
+    } catch (_) {}
+  }
+
+  async function updateTimerNotification(force) {
+    if (!state.running || state.setsRemaining <= 0) {
+      closeTimerNotification();
+      return;
+    }
+    const allowed = await ensureTimerNotificationPermission();
+    if (!allowed) return;
+    const text = getTimerNotificationText();
+    const key = text;
+    if (!force && key === lastTimerNotificationKey) return;
+    try {
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (!reg) return;
+      await reg.showNotification("Gymmer timer", {
+        body: text,
+        tag: TIMER_NOTIFICATION_TAG,
+        renotify: false,
+        requireInteraction: true,
+        silent: true,
+        data: { url: "./" },
+      });
+      lastTimerNotificationKey = key;
+    } catch (_) {}
   }
 
   const dom = {
@@ -599,6 +667,7 @@
     dom.timerDisplay.classList.remove("done");
     updateProgressRing();
     saveSessionState();
+    updateTimerNotification(true);
   }
 
   const PHASE_END_DURATION_MS = 1200;
@@ -648,6 +717,7 @@
     }
     updateProgressRing();
     saveSessionState();
+    updateTimerNotification(false);
   }
 
   let audioCtx = null;
@@ -792,6 +862,7 @@
     dom.timerDisplayBtn.setAttribute("aria-label", "Start timer");
     dom.btnStart.classList.remove("running");
     saveSessionState();
+    closeTimerNotification();
   }
 
   function switchPhase() {
@@ -852,6 +923,7 @@
     dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
     dom.btnStart.classList.remove("running");
     saveSessionState();
+    closeTimerNotification();
   }
 
   function resumeTimer() {
@@ -866,6 +938,7 @@
     dom.btnStart.classList.add("running");
     state.intervalId = setInterval(tick, 1000);
     saveSessionState();
+    updateTimerNotification(true);
   }
 
   function startWorkout() {
@@ -890,6 +963,7 @@
     soundPrepTick();
     state.intervalId = setInterval(tick, 1000);
     saveSessionState();
+    updateTimerNotification(true);
   }
 
   function startStop() {
@@ -903,6 +977,7 @@
   function reset() {
     saveSessionIfAny();
     releaseWakeLock();
+    closeTimerNotification();
     clearPhaseEndAnimation();
     if (state.intervalId) {
       clearInterval(state.intervalId);
@@ -1025,6 +1100,11 @@
   syncPresetActiveStates();
   syncCustomInputs();
   renderCompletions();
+  if (state.running && state.setsRemaining > 0) {
+    updateTimerNotification(true);
+  } else {
+    closeTimerNotification();
+  }
 
   const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
