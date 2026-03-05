@@ -795,6 +795,7 @@ body::before {
   opacity: 0.8;
 }
 
+.btn-back-history-bottom,
 .btn-clear-history {
   width: 100%;
   font-size: 0.9rem;

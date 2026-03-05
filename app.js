@@ -161,6 +161,7 @@
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
+    btnBackHistoryBottom: document.getElementById("btn-back-history-bottom"),
   };
 
   function showView(name) {
@@ -1297,6 +1298,12 @@
     haptic();
     goToSettings();
   });
+  if (dom.btnBackHistoryBottom) {
+    dom.btnBackHistoryBottom.addEventListener("click", function () {
+      haptic();
+      goToSettings();
+    });
+  }
 
   document.addEventListener("visibilitychange", function () {
     if (state.running) {
