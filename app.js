@@ -153,7 +153,6 @@
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
     presetStatus: document.getElementById("preset-status"),
-    btnClearWorkoutPreset: document.getElementById("btn-clear-workout-preset"),
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
@@ -231,16 +230,14 @@
   }
 
   function renderWorkoutPresetStatus() {
-    if (!dom.presetStatus || !dom.btnClearWorkoutPreset) return;
+    if (!dom.presetStatus) return;
     if (!state.selectedWorkoutPreset) {
       dom.presetStatus.textContent = "Preset: Custom";
-      dom.btnClearWorkoutPreset.classList.add("hidden");
       return;
     }
     const meta = getBodyPartMeta(state.selectedWorkoutPreset);
     const modifiedSuffix = isSelectedWorkoutPresetModified() ? " (modified)" : "";
     dom.presetStatus.textContent = "Preset: " + meta.label + modifiedSuffix;
-    dom.btnClearWorkoutPreset.classList.remove("hidden");
   }
 
   function saveSessionState() {
@@ -1133,6 +1130,7 @@
   if (!restoredSession) {
     setPhase("work");
     updateSetDisplay();
+    goToTimer();
   } else {
     goToTimer();
     updateSetDisplay();
@@ -1246,15 +1244,6 @@
       );
     });
   });
-  if (dom.btnClearWorkoutPreset) {
-    dom.btnClearWorkoutPreset.addEventListener("click", function () {
-      haptic();
-      if (!state.selectedWorkoutPreset) return;
-      state.selectedWorkoutPreset = null;
-      syncPresetActiveStates();
-      saveSessionState();
-    });
-  }
 
   function handleCustomTimeInput(inputEl, target) {
     const val = parseTimeInput(inputEl.value);
