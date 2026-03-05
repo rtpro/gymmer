@@ -932,7 +932,6 @@
 
   function applyPreset(target, seconds) {
     if (state.running) return;
-    state.selectedWorkoutPreset = null;
     const clamped = Math.max(MIN_SECONDS, Math.min(MAX_SECONDS, seconds));
     if (target === "work") {
       state.workSeconds = clamped;
@@ -951,7 +950,6 @@
     if (state.running) return;
     state.totalSets = total;
     state.setsRemaining = total;
-    state.selectedWorkoutPreset = null;
     updateSetDisplay();
     syncPresetActiveStates();
     saveSessionState();
@@ -1110,6 +1108,12 @@
   dom.workoutPresetBtns.forEach((btn) => {
     btn.addEventListener("click", function () {
       haptic();
+      if (btn.dataset.preset === state.selectedWorkoutPreset) {
+        state.selectedWorkoutPreset = null;
+        syncPresetActiveStates();
+        saveSessionState();
+        return;
+      }
       applyWorkoutPreset(
         parseInt(btn.dataset.sets, 10),
         parseInt(btn.dataset.work, 10),
