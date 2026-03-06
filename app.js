@@ -1130,10 +1130,14 @@
   if (!restoredSession) {
     setPhase("work");
     updateSetDisplay();
-    goToTimer();
+    goToSettings(true);
   } else {
-    goToTimer();
     updateSetDisplay();
+    if (state.setsRemaining > 0) {
+      goToTimer();
+    } else {
+      goToSettings(true);
+    }
   }
   syncPresetActiveStates();
   syncCustomInputs();
