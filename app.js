@@ -904,18 +904,19 @@
     const next = state.phase === "work" ? "rest" : "work";
     if (next === "rest") {
       state.workPhasesCompleted += 1;
-    }
-    if (next === "work") {
-      state.restPhasesCompleted += 1;
       state.setsRemaining -= 1;
       if (state.setsRemaining <= 0) {
-        saveCompletion(state.totalSets, state.totalSets, true);
+        const completedRest = Math.max(0, state.totalSets - 1);
+        saveCompletion(state.totalSets, completedRest, true);
         stopTimer();
         updateSetDisplay();
         soundDone();
         haptic();
         return;
       }
+    }
+    if (next === "work") {
+      state.restPhasesCompleted += 1;
     }
     setPhase(next);
     updateSetDisplay();
