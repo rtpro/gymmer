@@ -202,7 +202,8 @@ body::before {
 }
 
 .insight-pill span,
-.coach-card span {
+.coach-card span,
+.insight-heatmap > span {
   font-size: 0.68rem;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -223,11 +224,15 @@ body::before {
 
 .insight-row {
   display: grid;
-  grid-template-columns: 3.2rem 1fr 1.4rem;
+  grid-template-columns: 3.2rem 1fr 2.8rem;
   align-items: center;
   gap: 0.4rem;
   font-size: 0.74rem;
   color: var(--text-muted);
+}
+
+.insight-heatmap .insight-row {
+  margin-top: 0.35rem;
 }
 
 .insight-bar {

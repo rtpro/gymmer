@@ -466,6 +466,8 @@
       return;
     }
 
+    const BODY_PART_TARGETS = { Chest: 16, Back: 18, Legs: 16, Delts: 16, Arms: 14, Abs: 10 };
+
     const now = new Date();
     const dayMs = 24 * 60 * 60 * 1000;
     const last7Start = now.getTime() - (7 * dayMs);
@@ -478,7 +480,10 @@
     let sets7 = 0;
     let seconds7 = 0;
     let peakSetsWorkout = 0;
-    const bodyPartCounts7 = {};
+    let totalWorkDone = 0;
+    let totalRestDone = 0;
+    const bodyPartFreq7 = {};
+    const bodyPartSets7 = {};
     const workoutDays7 = new Set();
 
     for (let i = 6; i >= 0; i--) {
@@ -503,25 +508,58 @@
       if (ts < last7Start) return;
       workouts7 += 1;
       sets7 += completedWork || 0;
+      totalWorkDone += completedWork || 0;
+      totalRestDone += completedRest || 0;
       seconds7 += (entry.workSeconds || 0) * (completedWork || 0);
       seconds7 += (entry.restSeconds || 0) * (completedRest || 0);
       workoutDays7.add(dayKey);
-      const key = getEntryBodyPart(entry);
-      bodyPartCounts7[key] = (bodyPartCounts7[key] || 0) + 1;
+
+      const part = getEntryBodyPart(entry);
+      bodyPartFreq7[part] = (bodyPartFreq7[part] || 0) + 1;
+      bodyPartSets7[part] = (bodyPartSets7[part] || 0) + (completedWork || 0);
     });
 
-    const topBodyPart = Object.keys(bodyPartCounts7).sort(function (a, b) {
-      return bodyPartCounts7[b] - bodyPartCounts7[a];
+    const topBodyPart = Object.keys(bodyPartFreq7).sort(function (a, b) {
+      return bodyPartFreq7[b] - bodyPartFreq7[a];
     })[0] || "Custom";
 
     const completionRate = Math.round((fullCount / list.length) * 100);
+    const restAdherence = totalWorkDone > 0 ? Math.round((totalRestDone / totalWorkDone) * 100) : 0;
+    const qualityScore = Math.round((completionRate * 0.65) + (Math.min(100, restAdherence) * 0.35));
     const streak7 = workoutDays7.size;
     const longestStreak = getLongestDailyStreak(allWorkoutDays);
+
+    const targetKeys = Object.keys(BODY_PART_TARGETS);
+    let touchedTargets = 0;
+    const volumeRows = targetKeys.map(function (name) {
+      const done = bodyPartSets7[name] || 0;
+      const target = BODY_PART_TARGETS[name];
+      const ratio = target > 0 ? Math.min(1, done / target) : 0;
+      if (done > 0) touchedTargets += 1;
+      const pct = Math.round(ratio * 100);
+      return {
+        name: name,
+        done: done,
+        target: target,
+        pct: pct,
+      };
+    });
+
+    const lagging = volumeRows.slice().sort(function (a, b) {
+      return (a.done / a.target) - (b.done / b.target);
+    })[0];
+
+    const splitAdherence = Math.round((touchedTargets / targetKeys.length) * 100);
+
     const barsMax = Math.max(1, ...dayKeys.map(function (k) { return setsByDay[k] || 0; }));
     const sparkBars = dayKeys.map(function (k) {
       const v = setsByDay[k] || 0;
       const h = Math.max(10, Math.round((v / barsMax) * 100));
       return "<span class=\"spark-bar\" style=\"height:" + h + "%\" title=\"" + v + " sets\"></span>";
+    }).join("");
+
+    const volumeHtml = volumeRows.map(function (row) {
+      return "<div class=\"insight-row\"><span>" + row.name + "</span><div class=\"insight-bar\"><i style=\"width:" + row.pct + "%\"></i></div><b>" + row.done + "/" + row.target + "</b></div>";
     }).join("");
 
     dom.historyInsights.classList.remove("hidden");
@@ -530,9 +568,10 @@
       "<div class=\"insight-pill\"><span>Volume</span><strong>" + sets7 + " sets</strong></div>" +
       "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(seconds7) + "</strong></div>" +
       "<div class=\"insight-pill\"><span>Streak (7d)</span><strong>" + streak7 + "/7 days</strong></div>" +
-      "<div class=\"coach-card\"><span>Completion rate</span><strong>" + completionRate + "%</strong><small>Top body part this week: " + topBodyPart + "</small></div>" +
+      "<div class=\"coach-card\"><span>Quality score</span><strong>" + qualityScore + "%</strong><small>Completion " + completionRate + "% · Rest adherence " + Math.min(100, restAdherence) + "%</small></div>" +
+      "<div class=\"insight-heatmap\"><span>Volume by muscle group (sets / target)</span>" + volumeHtml + "</div>" +
       "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div></div>" +
-      "<div class=\"insight-pr\"><span>Personal bests</span><strong>" + peakSetsWorkout + " sets in one workout</strong><small>Longest streak: " + longestStreak + " days</small></div>";
+      "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split adherence: " + splitAdherence + "%</strong><small>Lagging group: " + lagging.name + " (" + lagging.done + "/" + lagging.target + " sets) · Top frequency: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
   }
 
   function syncHistoryFilterButtons() {
