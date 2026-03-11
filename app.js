@@ -142,7 +142,6 @@
     viewHistory: document.getElementById("view-history"),
     setDots: document.getElementById("set-dots"),
     phaseBadge: document.getElementById("phase-badge"),
-    finalRestHint: document.getElementById("final-rest-hint"),
     timerValue: document.getElementById("timer-value"),
     timerDisplay: document.getElementById("timer-display"),
     timerDisplayBtn: document.getElementById("timer-display-btn"),
@@ -345,8 +344,7 @@
       setTimerValue(String(state.remainingSeconds));
     }
     updateRestBadgeUrgency();
-    updateFinalRestHint();
-
+    
     dom.btnReset.textContent = "Hold to reset";
     dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
     dom.btnReset.classList.remove("btn-primary");
@@ -608,15 +606,6 @@
     else dom.timerValue.setAttribute("data-digits", "long");
   }
 
-  function isFinalRestPhase() {
-    return state.phase === "rest" && state.setsRemaining === 1 && state.workPhasesCompleted >= state.totalSets;
-  }
-
-  function updateFinalRestHint() {
-    if (!dom.finalRestHint) return;
-    dom.finalRestHint.classList.toggle("hidden", !isFinalRestPhase());
-  }
-
   function updateRestBadgeUrgency() {
     const urgent = state.phase === "rest" && state.remainingSeconds > 0 && state.remainingSeconds <= 3;
     dom.phaseBadge.classList.toggle("urgent", urgent);
@@ -689,8 +678,7 @@
       }
       updateProgressRing();
       updateRestBadgeUrgency();
-      updateFinalRestHint();
-      saveSessionState();
+            saveSessionState();
     }
   }
 
@@ -721,8 +709,7 @@
     dom.timerDisplay.classList.remove("done");
     updateProgressRing();
     updateRestBadgeUrgency();
-    updateFinalRestHint();
-    saveSessionState();
+        saveSessionState();
     updateTimerNotification(true);
   }
 
@@ -773,8 +760,7 @@
     }
     updateProgressRing();
     updateRestBadgeUrgency();
-    updateFinalRestHint();
-    saveSessionState();
+        saveSessionState();
     updateTimerNotification(false);
   }
 
@@ -899,12 +885,10 @@
 
   function updateSetDisplay() {
     renderSetDots();
-    updateFinalRestHint();
-    if (state.setsRemaining <= 0) {
+        if (state.setsRemaining <= 0) {
       dom.timerDisplay.classList.add("done");
       dom.phaseBadge.classList.remove("urgent");
-      if (dom.finalRestHint) dom.finalRestHint.classList.add("hidden");
-      setTimerValue("Done!");
+            setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
       dom.timerDisplay.style.setProperty("--progress", "0");
       dom.btnStart.textContent = "Again";
@@ -975,8 +959,7 @@
       dom.timerDisplay.classList.remove("paused");
       updateRestBadgeUrgency();
     }
-    updateFinalRestHint();
-  }
+      }
 
   function pauseTimer() {
     if (!state.running) return;

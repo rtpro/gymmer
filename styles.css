@@ -398,19 +398,6 @@ body::before {
   box-shadow: 0 0 0 1px rgba(139, 149, 168, 0.4);
 }
 
-.final-rest-hint {
-  font-size: 0.74rem;
-  line-height: 1.35;
-  text-align: center;
-  color: #9eb5d9;
-  max-width: 300px;
-  margin-top: -0.55rem;
-  margin-bottom: 0.1rem;
-  padding: 0.35rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid rgba(120, 172, 255, 0.32);
-  background: rgba(120, 172, 255, 0.1);
-}
 
 .timer-display {
   width: min(300px, 85vw);
