@@ -605,7 +605,7 @@
     }).join("");
 
     const primaryCount = state.historyMode === "session" ? sessions7 : workouts7;
-    const primaryLabel = state.historyMode === "session" ? "sessions" : "workouts";
+    const primaryLabel = state.historyMode === "session" ? "sessions" : "exercise blocks";
     const primarySub = state.historyMode === "session" ? "Grouped by 90m window" : "Raw workout entries";
 
     dom.historyInsights.classList.remove("hidden");
@@ -617,7 +617,7 @@
       "<div class=\"coach-card\"><span>Quality score</span><strong>" + qualityScore + "% · " + qualityBand + "</strong><small>Completion rate " + completionRate + "% · Rest adherence " + restAdherence + "% (rest sets completed vs work sets)</small></div>" +
       "<div class=\"insight-heatmap\"><span>Volume by muscle group (sets / target)</span>" + volumeHtml + "</div>" +
       "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div><div class=\"spark-labels\">" + sparkLabels + "</div></div>" +
-      "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split coverage: " + splitCoverage + "%</strong><small>Lagging group: <span class=\"lagging-emphasis\">" + lagging.name + " (" + laggingPct + "% of target)</span> · Top frequency: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
+      "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split coverage: " + splitCoverage + "%</strong><small>Lagging muscle group: <span class=\"lagging-emphasis\">" + lagging.name + " (" + laggingPct + "% of target)</span> · Most trained muscle group: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
   }
 
   function syncHistoryModeButtons() {
@@ -647,7 +647,7 @@
     }
 
     dom.historyBodyFilters.innerHTML =
-      "<button type=\"button\" class=\"history-body-btn" + (state.historyBodyFilter === "all" ? " active" : "") + "\" data-body-filter=\"all\">All body parts</button>" +
+      "<button type=\"button\" class=\"history-body-btn" + (state.historyBodyFilter === "all" ? " active" : "") + "\" data-body-filter=\"all\">All muscle groups</button>" +
       parts.map(function (part) {
         const active = state.historyBodyFilter === part ? " active" : "";
         return "<button type=\"button\" class=\"history-body-btn" + active + "\" data-body-filter=\"" + part + "\">" + part + " <small>" + counts[part] + "</small></button>";
@@ -1092,9 +1092,9 @@
             setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
       dom.timerDisplay.style.setProperty("--progress", "0");
-      dom.btnStart.textContent = "Again";
-      dom.btnStart.setAttribute("aria-label", "Start another round");
-      dom.timerDisplayBtn.setAttribute("aria-label", "Start another round");
+      dom.btnStart.textContent = "Next exercise";
+      dom.btnStart.setAttribute("aria-label", "Start next exercise");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Start next exercise");
       dom.btnStart.classList.remove("btn-primary");
       dom.btnStart.classList.add("btn-secondary");
       dom.btnReset.textContent = "Done";
