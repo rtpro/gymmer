@@ -10,6 +10,7 @@
   const STORAGE_KEY = "gymmer_completions";
   const SESSION_KEY = "gymmer_session_v1";
   const MAX_COMPLETIONS = 50;
+  const SESSION_GROUP_WINDOW_MS = 90 * 60 * 1000;
 
   const BODY_PART_META = {
     chest: { label: "Chest", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"9.7\" y=\"7.9\" width=\"4.6\" height=\"2.7\" rx=\".7\" fill=\"currentColor\"/></svg>" },
@@ -36,6 +37,7 @@
     selectedWorkoutPreset: null,
     historyFilter: "all",
     historyBodyFilter: "all",
+    historyMode: "session",
   };
 
   let wakeLockSentinel = null;
@@ -159,6 +161,7 @@
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
     historyInsights: document.getElementById("history-insights"),
+    historyModeBtns: document.querySelectorAll(".history-mode-btn"),
     historyFilterBtns: document.querySelectorAll(".history-filter-btn"),
     historyBodyFilters: document.getElementById("history-body-filters"),
     btnClearHistory: document.getElementById("btn-clear-history"),
@@ -458,7 +461,32 @@
     return best;
   }
 
-  function renderHistoryInsights(list) {
+  function groupWorkoutsIntoSessions(list) {
+    const sessions = [];
+    let current = null;
+    let prevTs = null;
+
+    list.forEach(function (entry) {
+      const ts = new Date(entry.date).getTime();
+      if (isNaN(ts)) return;
+      if (!current || prevTs == null || (prevTs - ts) > SESSION_GROUP_WINDOW_MS) {
+        current = {
+          entries: [],
+          newestTs: ts,
+          oldestTs: ts,
+        };
+        sessions.push(current);
+      }
+      current.entries.push(entry);
+      current.oldestTs = Math.min(current.oldestTs, ts);
+      current.newestTs = Math.max(current.newestTs, ts);
+      prevTs = ts;
+    });
+
+    return sessions;
+  }
+
+  function renderHistoryInsights(list, sessions) {
     if (!dom.historyInsights) return;
     if (!list || list.length === 0) {
       dom.historyInsights.innerHTML = "";
@@ -477,6 +505,7 @@
 
     let fullCount = 0;
     let workouts7 = 0;
+    let sessions7 = 0;
     let sets7 = 0;
     let seconds7 = 0;
     let peakSetsWorkout = 0;
@@ -518,6 +547,8 @@
       bodyPartFreq7[part] = (bodyPartFreq7[part] || 0) + 1;
       bodyPartSets7[part] = (bodyPartSets7[part] || 0) + (completedWork || 0);
     });
+
+    sessions7 = (sessions || []).filter(function (s) { return s.newestTs >= last7Start; }).length;
 
     const topBodyPart = Object.keys(bodyPartFreq7).sort(function (a, b) {
       return bodyPartFreq7[b] - bodyPartFreq7[a];
@@ -562,9 +593,12 @@
       return "<div class=\"insight-row\"><span>" + row.name + "</span><div class=\"insight-bar\"><i style=\"width:" + row.pct + "%\"></i></div><b>" + row.done + "/" + row.target + "</b></div>";
     }).join("");
 
+    const primaryCount = state.historyMode === "session" ? sessions7 : workouts7;
+    const primaryLabel = state.historyMode === "session" ? "sessions" : "workouts";
+
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
-      "<div class=\"insight-pill\"><span>This week</span><strong>" + workouts7 + " workouts</strong></div>" +
+      "<div class=\"insight-pill\"><span>This week</span><strong>" + primaryCount + " " + primaryLabel + "</strong></div>" +
       "<div class=\"insight-pill\"><span>Volume</span><strong>" + sets7 + " sets</strong></div>" +
       "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(seconds7) + "</strong></div>" +
       "<div class=\"insight-pill\"><span>Streak (7d)</span><strong>" + streak7 + "/7 days</strong></div>" +
@@ -572,6 +606,13 @@
       "<div class=\"insight-heatmap\"><span>Volume by muscle group (sets / target)</span>" + volumeHtml + "</div>" +
       "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div></div>" +
       "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split adherence: " + splitAdherence + "%</strong><small>Lagging group: " + lagging.name + " (" + lagging.done + "/" + lagging.target + " sets) · Top frequency: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
+  }
+
+  function syncHistoryModeButtons() {
+    if (!dom.historyModeBtns) return;
+    dom.historyModeBtns.forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.historyMode === state.historyMode);
+    });
   }
 
   function syncHistoryFilterButtons() {
@@ -603,12 +644,6 @@
 
   function filterHistoryList(list) {
     let filtered = list;
-    if (state.historyFilter === "full") {
-      filtered = filtered.filter(isEntryFull);
-    } else if (state.historyFilter === "partial") {
-      filtered = filtered.filter(function (entry) { return !isEntryFull(entry); });
-    }
-
     if (state.historyBodyFilter !== "all") {
       filtered = filtered.filter(function (entry) {
         return getEntryBodyPart(entry) === state.historyBodyFilter;
@@ -620,18 +655,69 @@
   function renderCompletions() {
     const list = getCompletions();
     renderBodyPartFilters(list);
-    const filtered = filterHistoryList(list);
-    renderHistoryInsights(list);
+    const byBody = filterHistoryList(list);
+    const workoutFiltered = state.historyFilter === "full"
+      ? byBody.filter(isEntryFull)
+      : state.historyFilter === "partial"
+        ? byBody.filter(function (entry) { return !isEntryFull(entry); })
+        : byBody;
+    let sessions = groupWorkoutsIntoSessions(byBody);
+    if (state.historyFilter === "full") {
+      sessions = sessions.filter(function (s) { return s.entries.every(isEntryFull); });
+    } else if (state.historyFilter === "partial") {
+      sessions = sessions.filter(function (s) { return !s.entries.every(isEntryFull); });
+    }
+    renderHistoryInsights(list, groupWorkoutsIntoSessions(list));
+    syncHistoryModeButtons();
     syncHistoryFilterButtons();
     dom.completionsList.innerHTML = "";
-    if (filtered.length === 0) {
+
+    const isSessionMode = state.historyMode === "session";
+    if ((isSessionMode ? sessions.length : workoutFiltered.length) === 0) {
       const li = document.createElement("li");
       li.className = "completion-item completion-item-empty";
       li.innerHTML = "<span class=\"completion-empty-icon\" aria-hidden=\"true\">🗓️</span><span>No workouts in this filter</span><small>Try another filter or complete a workout.</small>";
       dom.completionsList.appendChild(li);
+      dom.btnClearHistory.hidden = list.length === 0;
+      return;
+    }
+
+    const now = new Date();
+    if (isSessionMode) {
+      sessions.forEach(function (session) {
+        const entries = session.entries;
+        const newest = new Date(session.newestTs);
+        const dateStr = newest.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          year: newest.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
+        });
+        const timeStr = newest.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+        const parts = Array.from(new Set(entries.map(getEntryBodyPart)));
+        const totalSets = entries.reduce(function (sum, entry) {
+          return sum + (entry.completedWork != null ? entry.completedWork : entry.sets || 0);
+        }, 0);
+        const full = entries.every(isEntryFull);
+        const statusClass = full ? "is-full" : "is-partial";
+        const statusLabel = full ? "Full" : "Partial";
+        const title = parts.slice(0, 2).join(" + ") + (parts.length > 2 ? " +" + (parts.length - 2) : "") + " • " + totalSets + " sets";
+
+        const li = document.createElement("li");
+        li.className = "completion-item";
+        li.innerHTML =
+          "<div class=\"completion-top\">" +
+            "<span class=\"completion-summary\">" + title + "</span>" +
+            "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
+          "</div>" +
+          "<div class=\"completion-meta\">" +
+            "<span>" + entries.length + " workouts</span>" +
+            "<span>Window " + Math.max(1, Math.round((session.newestTs - session.oldestTs) / 60000)) + "m</span>" +
+            "<span>" + dateStr + " · " + timeStr + "</span>" +
+          "</div>";
+        dom.completionsList.appendChild(li);
+      });
     } else {
-      const now = new Date();
-      filtered.forEach(function (entry) {
+      workoutFiltered.forEach(function (entry) {
         const d = new Date(entry.date);
         const dateStr = d.toLocaleDateString(undefined, {
           month: "short",
@@ -646,7 +732,7 @@
         const isFull = isEntryFull(entry);
         const statusClass = isFull ? "is-full" : "is-partial";
         const statusLabel = isFull ? "Full" : "Partial";
-        const bodyPart = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
+        const bodyPart = getEntryBodyPart(entry);
         const title = bodyPart + " • " + w + (total ? "/" + total : "") + " sets";
 
         const li = document.createElement("li");
@@ -664,6 +750,7 @@
         dom.completionsList.appendChild(li);
       });
     }
+
     dom.btnClearHistory.hidden = list.length === 0;
   }
 
@@ -1413,6 +1500,17 @@
     haptic();
     goToSettings();
   });
+  if (dom.historyModeBtns && dom.historyModeBtns.length) {
+    dom.historyModeBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const nextMode = btn.dataset.historyMode || "session";
+        if (state.historyMode === nextMode) return;
+        state.historyMode = nextMode;
+        hapticLight();
+        renderCompletions();
+      });
+    });
+  }
   if (dom.historyFilterBtns && dom.historyFilterBtns.length) {
     dom.historyFilterBtns.forEach(function (btn) {
       btn.addEventListener("click", function () {
