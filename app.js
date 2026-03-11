@@ -404,6 +404,15 @@
   function saveSessionIfAny() {
     const w = state.workPhasesCompleted;
     const r = state.restPhasesCompleted;
+
+    // If all work phases were completed, treat workout as completed even if
+    // the last rest was shortened via hold-to-reset.
+    if (w >= state.totalSets && state.totalSets > 0) {
+      saveCompletion(state.totalSets, state.totalSets, true);
+      clearSessionState();
+      return;
+    }
+
     if (w > 0 || r > 0) saveCompletion(w, r, false);
     clearSessionState();
   }
