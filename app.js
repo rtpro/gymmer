@@ -34,6 +34,7 @@
     running: false,
     intervalId: null,
     selectedWorkoutPreset: null,
+    historyFilter: "all",
   };
 
   let wakeLockSentinel = null;
@@ -157,6 +158,7 @@
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
     historyInsights: document.getElementById("history-insights"),
+    historyFilterBtns: document.querySelectorAll(".history-filter-btn"),
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
@@ -432,99 +434,80 @@
     const now = new Date();
     const dayMs = 24 * 60 * 60 * 1000;
     const last7Start = now.getTime() - (7 * dayMs);
-    const prev7Start = now.getTime() - (14 * dayMs);
 
-    let totalSets = 0;
-    let totalSeconds = 0;
     let fullCount = 0;
-    const bodyPartCounts = {};
-    const bodyPartLastTs = {};
+    let workouts7 = 0;
+    let sets7 = 0;
+    let seconds7 = 0;
+    const bodyPartCounts7 = {};
     const workoutDays7 = new Set();
-    const workoutsLast7 = [];
-    const workoutsPrev7 = [];
 
     list.forEach(function (entry) {
       const ts = new Date(entry.date).getTime();
       if (isNaN(ts)) return;
+      if (isEntryFull(entry)) fullCount += 1;
+      if (ts < last7Start) return;
 
+      workouts7 += 1;
       const completedWork = entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0);
       const completedRest = entry.completedRest != null ? entry.completedRest : completedWork;
+      sets7 += completedWork || 0;
+      seconds7 += (entry.workSeconds || 0) * (completedWork || 0);
+      seconds7 += (entry.restSeconds || 0) * (completedRest || 0);
 
-      totalSets += completedWork || 0;
-      totalSeconds += (entry.workSeconds || 0) * (completedWork || 0);
-      totalSeconds += (entry.restSeconds || 0) * (completedRest || 0);
-
+      const d = new Date(ts);
+      workoutDays7.add(d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate());
       const key = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
-      bodyPartCounts[key] = (bodyPartCounts[key] || 0) + 1;
-      bodyPartLastTs[key] = Math.max(bodyPartLastTs[key] || 0, ts);
-
-      if (isEntryFull(entry)) fullCount += 1;
-
-      if (ts >= last7Start) {
-        workoutsLast7.push(entry);
-        const d = new Date(ts);
-        workoutDays7.add(d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate());
-      } else if (ts >= prev7Start) {
-        workoutsPrev7.push(entry);
-      }
+      bodyPartCounts7[key] = (bodyPartCounts7[key] || 0) + 1;
     });
 
-    const topBodyPart = Object.keys(bodyPartCounts).sort(function (a, b) {
-      return bodyPartCounts[b] - bodyPartCounts[a];
+    const topBodyPart = Object.keys(bodyPartCounts7).sort(function (a, b) {
+      return bodyPartCounts7[b] - bodyPartCounts7[a];
     })[0] || "Custom";
 
     const completionRate = Math.round((fullCount / list.length) * 100);
-    const consistency = Math.min(100, Math.round((workoutDays7.size / 7) * 100));
-
-    const setsLast7 = workoutsLast7.reduce(function (sum, entry) {
-      return sum + (entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0) || 0);
-    }, 0);
-    const setsPrev7 = workoutsPrev7.reduce(function (sum, entry) {
-      return sum + (entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0) || 0);
-    }, 0);
-    const setsTrend = setsLast7 - setsPrev7;
-
-    const trackedBodyParts = ["Chest", "Back", "Legs", "Arms", "Delts", "Abs"];
-    const undertrained = trackedBodyParts
-      .map(function (name) {
-        const lastTs = bodyPartLastTs[name] || 0;
-        const days = lastTs ? Math.floor((now.getTime() - lastTs) / dayMs) : 999;
-        return { name: name, days: days };
-      })
-      .sort(function (a, b) { return b.days - a.days; })
-      .slice(0, 2)
-      .map(function (x) { return x.days >= 999 ? x.name + " (never)" : x.name + " (" + x.days + "d)"; })
-      .join(" • ");
-
-    const heatmapHtml = trackedBodyParts.map(function (name) {
-      const count = bodyPartCounts[name] || 0;
-      const max = Math.max(1, bodyPartCounts[topBodyPart] || 1);
-      const width = Math.max(8, Math.round((count / max) * 100));
-      return "<div class=\"insight-row\"><span>" + name + "</span><div class=\"insight-bar\"><i style=\"width:" + width + "%\"></i></div><b>" + count + "</b></div>";
-    }).join("");
+    const streak7 = workoutDays7.size;
 
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
-      "<div class=\"insight-pill\"><span>Consistency (7d)</span><strong>" + consistency + "%</strong></div>" +
-      "<div class=\"insight-pill\"><span>Completion rate</span><strong>" + completionRate + "%</strong></div>" +
-      "<div class=\"insight-pill\"><span>Weekly volume</span><strong>" + setsLast7 + " sets</strong><small>" + (setsTrend >= 0 ? "+" : "") + setsTrend + " vs prev 7d</small></div>" +
-      "<div class=\"insight-pill\"><span>Top body part</span><strong>" + topBodyPart + "</strong><small>" + (bodyPartCounts[topBodyPart] || 0) + " workouts</small></div>" +
-      "<div class=\"coach-card\"><span>Undertrained</span><strong>" + undertrained + "</strong><small>Total time: " + formatDuration(totalSeconds) + " · Total sets: " + totalSets + "</small></div>" +
-      "<div class=\"insight-heatmap\">" + heatmapHtml + "</div>";
+      "<div class=\"insight-pill\"><span>This week</span><strong>" + workouts7 + " workouts</strong></div>" +
+      "<div class=\"insight-pill\"><span>Volume</span><strong>" + sets7 + " sets</strong></div>" +
+      "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(seconds7) + "</strong></div>" +
+      "<div class=\"insight-pill\"><span>Streak (7d)</span><strong>" + streak7 + "/7 days</strong></div>" +
+      "<div class=\"coach-card\"><span>Completion rate</span><strong>" + completionRate + "%</strong><small>Top body part this week: " + topBodyPart + "</small></div>";
+  }
+
+  function syncHistoryFilterButtons() {
+    if (!dom.historyFilterBtns) return;
+    dom.historyFilterBtns.forEach(function (btn) {
+      btn.classList.toggle("active", btn.dataset.filter === state.historyFilter);
+    });
+  }
+
+  function filterHistoryList(list) {
+    if (state.historyFilter === "full") {
+      return list.filter(isEntryFull);
+    }
+    if (state.historyFilter === "partial") {
+      return list.filter(function (entry) { return !isEntryFull(entry); });
+    }
+    return list;
   }
 
   function renderCompletions() {
     const list = getCompletions();
+    const filtered = filterHistoryList(list);
     renderHistoryInsights(list);
+    syncHistoryFilterButtons();
     dom.completionsList.innerHTML = "";
-    if (list.length === 0) {
+    if (filtered.length === 0) {
       const li = document.createElement("li");
       li.className = "completion-item completion-item-empty";
-      li.innerHTML = "<span class=\"completion-empty-icon\" aria-hidden=\"true\">🗓️</span><span>No workouts yet</span><small>Complete one session and it will appear here.</small>";
+      li.innerHTML = "<span class=\"completion-empty-icon\" aria-hidden=\"true\">🗓️</span><span>No workouts in this filter</span><small>Try another filter or complete a workout.</small>";
       dom.completionsList.appendChild(li);
     } else {
       const now = new Date();
-      list.forEach(function (entry) {
+      filtered.forEach(function (entry) {
         const d = new Date(entry.date);
         const dateStr = d.toLocaleDateString(undefined, {
           month: "short",
@@ -535,26 +518,21 @@
         const workStr = formatDuration(entry.workSeconds);
         const restStr = formatDuration(entry.restSeconds);
         const w = entry.completedWork != null ? entry.completedWork : entry.sets;
-        const r = entry.completedRest != null ? entry.completedRest : entry.sets;
         const total = entry.totalSets != null ? entry.totalSets : entry.sets;
         const isFull = isEntryFull(entry);
-
-        const summary = isFull
-          ? w + " sets completed"
-          : w + " work / " + r + " rest" + (total != null ? " of " + total : "");
         const statusClass = isFull ? "is-full" : "is-partial";
-        const statusLabel = isFull ? "Completed" : "Partial";
-        const bodyPart = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : null);
+        const statusLabel = isFull ? "Full" : "Partial";
+        const bodyPart = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
+        const title = bodyPart + " • " + w + (total ? "/" + total : "") + " sets";
 
         const li = document.createElement("li");
         li.className = "completion-item";
         li.innerHTML =
           "<div class=\"completion-top\">" +
-            "<span class=\"completion-summary\">" + summary + "</span>" +
+            "<span class=\"completion-summary\">" + title + "</span>" +
             "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
           "</div>" +
           "<div class=\"completion-meta\">" +
-            (bodyPart ? "<span class=\"completion-body-part\">" + bodyPart + "</span>" : "") +
             "<span>Work " + workStr + "</span>" +
             "<span>Rest " + restStr + "</span>" +
             "<span>" + dateStr + " · " + timeStr + "</span>" +
@@ -1311,6 +1289,17 @@
     haptic();
     goToSettings();
   });
+  if (dom.historyFilterBtns && dom.historyFilterBtns.length) {
+    dom.historyFilterBtns.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        const nextFilter = btn.dataset.filter || "all";
+        if (state.historyFilter === nextFilter) return;
+        state.historyFilter = nextFilter;
+        hapticLight();
+        renderCompletions();
+      });
+    });
+  }
   if (dom.btnBackHistoryBottom) {
     dom.btnBackHistoryBottom.addEventListener("click", function () {
       haptic();
