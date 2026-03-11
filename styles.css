@@ -252,7 +252,11 @@ body::before {
 .insight-row b {
   text-align: right;
   color: var(--text);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
+}
+
+.insight-value-over {
+  color: #7adf9e;
 }
 
 .view-history .completions-list {
@@ -365,6 +369,19 @@ body::before {
   min-height: 0.35rem;
 }
 
+.spark-labels {
+  margin-top: 0.28rem;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.spark-labels span {
+  flex: 1;
+  text-align: center;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
 .insight-pr strong {
   display: block;
   margin-top: 0.2rem;
@@ -374,6 +391,11 @@ body::before {
 .insight-pr small {
   color: var(--text-muted);
   font-size: 0.74rem;
+}
+
+.lagging-emphasis {
+  color: #f2c675;
+  font-weight: 600;
 }
 
 .settings-card {

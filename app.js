@@ -555,8 +555,10 @@
     })[0] || "Custom";
 
     const completionRate = Math.round((fullCount / list.length) * 100);
-    const restAdherence = totalWorkDone > 0 ? Math.round((totalRestDone / totalWorkDone) * 100) : 0;
-    const qualityScore = Math.round((completionRate * 0.65) + (Math.min(100, restAdherence) * 0.35));
+    const restAdherenceRaw = totalWorkDone > 0 ? Math.round((totalRestDone / totalWorkDone) * 100) : 0;
+    const restAdherence = Math.min(100, restAdherenceRaw);
+    const qualityScore = Math.round((completionRate * 0.65) + (restAdherence * 0.35));
+    const qualityBand = qualityScore >= 85 ? "Excellent" : qualityScore >= 70 ? "Good" : qualityScore >= 55 ? "Fair" : "Needs work";
     const streak7 = workoutDays7.size;
     const longestStreak = getLongestDailyStreak(allWorkoutDays);
 
@@ -580,7 +582,8 @@
       return (a.done / a.target) - (b.done / b.target);
     })[0];
 
-    const splitAdherence = Math.round((touchedTargets / targetKeys.length) * 100);
+    const splitCoverage = Math.round((touchedTargets / targetKeys.length) * 100);
+    const laggingPct = Math.round((lagging.done / lagging.target) * 100);
 
     const barsMax = Math.max(1, ...dayKeys.map(function (k) { return setsByDay[k] || 0; }));
     const sparkBars = dayKeys.map(function (k) {
@@ -588,24 +591,33 @@
       const h = Math.max(10, Math.round((v / barsMax) * 100));
       return "<span class=\"spark-bar\" style=\"height:" + h + "%\" title=\"" + v + " sets\"></span>";
     }).join("");
+    const sparkLabels = dayKeys.map(function (k) {
+      const parts = k.split("-").map(function (x) { return parseInt(x, 10); });
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return "<span>" + d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 2) + "</span>";
+    }).join("");
 
     const volumeHtml = volumeRows.map(function (row) {
-      return "<div class=\"insight-row\"><span>" + row.name + "</span><div class=\"insight-bar\"><i style=\"width:" + row.pct + "%\"></i></div><b>" + row.done + "/" + row.target + "</b></div>";
+      const overflow = Math.max(0, row.done - row.target);
+      const valueText = row.done + "/" + row.target + (overflow > 0 ? " (+" + overflow + ")" : "");
+      const valueClass = overflow > 0 ? "insight-value insight-value-over" : "insight-value";
+      return "<div class=\"insight-row\"><span>" + row.name + "</span><div class=\"insight-bar\"><i style=\"width:" + row.pct + "%\"></i></div><b class=\"" + valueClass + "\">" + valueText + "</b></div>";
     }).join("");
 
     const primaryCount = state.historyMode === "session" ? sessions7 : workouts7;
     const primaryLabel = state.historyMode === "session" ? "sessions" : "workouts";
+    const primarySub = state.historyMode === "session" ? "Grouped by 90m window" : "Raw workout entries";
 
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
-      "<div class=\"insight-pill\"><span>This week</span><strong>" + primaryCount + " " + primaryLabel + "</strong></div>" +
+      "<div class=\"insight-pill\"><span>This week</span><strong>" + primaryCount + " " + primaryLabel + "</strong><small>" + primarySub + "</small></div>" +
       "<div class=\"insight-pill\"><span>Volume</span><strong>" + sets7 + " sets</strong></div>" +
       "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(seconds7) + "</strong></div>" +
       "<div class=\"insight-pill\"><span>Streak (7d)</span><strong>" + streak7 + "/7 days</strong></div>" +
-      "<div class=\"coach-card\"><span>Quality score</span><strong>" + qualityScore + "%</strong><small>Completion " + completionRate + "% · Rest adherence " + Math.min(100, restAdherence) + "%</small></div>" +
+      "<div class=\"coach-card\"><span>Quality score</span><strong>" + qualityScore + "% · " + qualityBand + "</strong><small>Completion rate " + completionRate + "% · Rest adherence " + restAdherence + "% (rest sets completed vs work sets)</small></div>" +
       "<div class=\"insight-heatmap\"><span>Volume by muscle group (sets / target)</span>" + volumeHtml + "</div>" +
-      "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div></div>" +
-      "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split adherence: " + splitAdherence + "%</strong><small>Lagging group: " + lagging.name + " (" + lagging.done + "/" + lagging.target + " sets) · Top frequency: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
+      "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div><div class=\"spark-labels\">" + sparkLabels + "</div></div>" +
+      "<div class=\"insight-pr\"><span>Bodybuilder coaching</span><strong>Split coverage: " + splitCoverage + "%</strong><small>Lagging group: <span class=\"lagging-emphasis\">" + lagging.name + " (" + laggingPct + "% of target)</span> · Top frequency: " + topBodyPart + " · Best session: " + peakSetsWorkout + " sets · Longest streak: " + longestStreak + " days</small></div>";
   }
 
   function syncHistoryModeButtons() {
