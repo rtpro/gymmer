@@ -35,6 +35,7 @@
     intervalId: null,
     selectedWorkoutPreset: null,
     historyFilter: "all",
+    historyBodyFilter: "all",
   };
 
   let wakeLockSentinel = null;
@@ -159,6 +160,7 @@
     completionsList: document.getElementById("completions-list"),
     historyInsights: document.getElementById("history-insights"),
     historyFilterBtns: document.querySelectorAll(".history-filter-btn"),
+    historyBodyFilters: document.getElementById("history-body-filters"),
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
@@ -423,6 +425,30 @@
     return completedWork >= total && completedRest >= total;
   }
 
+  function getEntryBodyPart(entry) {
+    return entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
+  }
+
+  function getLongestDailyStreak(daySet) {
+    const days = Array.from(daySet).sort();
+    let best = 0;
+    let current = 0;
+    let prev = null;
+    days.forEach(function (dayKey) {
+      const parts = dayKey.split("-").map(function (x) { return parseInt(x, 10); });
+      const cur = new Date(parts[0], parts[1] - 1, parts[2]);
+      if (!prev) {
+        current = 1;
+      } else {
+        const delta = Math.round((cur - prev) / (24 * 60 * 60 * 1000));
+        current = delta === 1 ? current + 1 : 1;
+      }
+      if (current > best) best = current;
+      prev = cur;
+    });
+    return best;
+  }
+
   function renderHistoryInsights(list) {
     if (!dom.historyInsights) return;
     if (!list || list.length === 0) {
@@ -434,30 +460,44 @@
     const now = new Date();
     const dayMs = 24 * 60 * 60 * 1000;
     const last7Start = now.getTime() - (7 * dayMs);
+    const dayKeys = [];
+    const setsByDay = {};
+    const allWorkoutDays = new Set();
 
     let fullCount = 0;
     let workouts7 = 0;
     let sets7 = 0;
     let seconds7 = 0;
+    let peakSetsWorkout = 0;
     const bodyPartCounts7 = {};
     const workoutDays7 = new Set();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * dayMs);
+      dayKeys.push(d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate());
+    }
 
     list.forEach(function (entry) {
       const ts = new Date(entry.date).getTime();
       if (isNaN(ts)) return;
       if (isEntryFull(entry)) fullCount += 1;
-      if (ts < last7Start) return;
 
-      workouts7 += 1;
       const completedWork = entry.completedWork != null ? entry.completedWork : (entry.totalSets || entry.sets || 0);
       const completedRest = entry.completedRest != null ? entry.completedRest : completedWork;
+      peakSetsWorkout = Math.max(peakSetsWorkout, completedWork || 0);
+
+      const d = new Date(ts);
+      const dayKey = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+      allWorkoutDays.add(dayKey);
+      setsByDay[dayKey] = (setsByDay[dayKey] || 0) + (completedWork || 0);
+
+      if (ts < last7Start) return;
+      workouts7 += 1;
       sets7 += completedWork || 0;
       seconds7 += (entry.workSeconds || 0) * (completedWork || 0);
       seconds7 += (entry.restSeconds || 0) * (completedRest || 0);
-
-      const d = new Date(ts);
-      workoutDays7.add(d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate());
-      const key = entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
+      workoutDays7.add(dayKey);
+      const key = getEntryBodyPart(entry);
       bodyPartCounts7[key] = (bodyPartCounts7[key] || 0) + 1;
     });
 
@@ -467,6 +507,13 @@
 
     const completionRate = Math.round((fullCount / list.length) * 100);
     const streak7 = workoutDays7.size;
+    const longestStreak = getLongestDailyStreak(allWorkoutDays);
+    const barsMax = Math.max(1, ...dayKeys.map(function (k) { return setsByDay[k] || 0; }));
+    const sparkBars = dayKeys.map(function (k) {
+      const v = setsByDay[k] || 0;
+      const h = Math.max(10, Math.round((v / barsMax) * 100));
+      return "<span class=\"spark-bar\" style=\"height:" + h + "%\" title=\"" + v + " sets\"></span>";
+    }).join("");
 
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
@@ -474,7 +521,9 @@
       "<div class=\"insight-pill\"><span>Volume</span><strong>" + sets7 + " sets</strong></div>" +
       "<div class=\"insight-pill\"><span>Total time</span><strong>" + formatDuration(seconds7) + "</strong></div>" +
       "<div class=\"insight-pill\"><span>Streak (7d)</span><strong>" + streak7 + "/7 days</strong></div>" +
-      "<div class=\"coach-card\"><span>Completion rate</span><strong>" + completionRate + "%</strong><small>Top body part this week: " + topBodyPart + "</small></div>";
+      "<div class=\"coach-card\"><span>Completion rate</span><strong>" + completionRate + "%</strong><small>Top body part this week: " + topBodyPart + "</small></div>" +
+      "<div class=\"insight-spark\"><span>Sets trend (last 7 days)</span><div class=\"spark-bars\">" + sparkBars + "</div></div>" +
+      "<div class=\"insight-pr\"><span>Personal bests</span><strong>" + peakSetsWorkout + " sets in one workout</strong><small>Longest streak: " + longestStreak + " days</small></div>";
   }
 
   function syncHistoryFilterButtons() {
@@ -484,18 +533,45 @@
     });
   }
 
+  function renderBodyPartFilters(list) {
+    if (!dom.historyBodyFilters) return;
+    const counts = {};
+    list.forEach(function (entry) {
+      const key = getEntryBodyPart(entry);
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    const parts = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; });
+    if (state.historyBodyFilter !== "all" && !counts[state.historyBodyFilter]) {
+      state.historyBodyFilter = "all";
+    }
+
+    dom.historyBodyFilters.innerHTML =
+      "<button type=\"button\" class=\"history-body-btn" + (state.historyBodyFilter === "all" ? " active" : "") + "\" data-body-filter=\"all\">All body parts</button>" +
+      parts.map(function (part) {
+        const active = state.historyBodyFilter === part ? " active" : "";
+        return "<button type=\"button\" class=\"history-body-btn" + active + "\" data-body-filter=\"" + part + "\">" + part + " <small>" + counts[part] + "</small></button>";
+      }).join("");
+  }
+
   function filterHistoryList(list) {
+    let filtered = list;
     if (state.historyFilter === "full") {
-      return list.filter(isEntryFull);
+      filtered = filtered.filter(isEntryFull);
+    } else if (state.historyFilter === "partial") {
+      filtered = filtered.filter(function (entry) { return !isEntryFull(entry); });
     }
-    if (state.historyFilter === "partial") {
-      return list.filter(function (entry) { return !isEntryFull(entry); });
+
+    if (state.historyBodyFilter !== "all") {
+      filtered = filtered.filter(function (entry) {
+        return getEntryBodyPart(entry) === state.historyBodyFilter;
+      });
     }
-    return list;
+    return filtered;
   }
 
   function renderCompletions() {
     const list = getCompletions();
+    renderBodyPartFilters(list);
     const filtered = filterHistoryList(list);
     renderHistoryInsights(list);
     syncHistoryFilterButtons();
@@ -1298,6 +1374,17 @@
         hapticLight();
         renderCompletions();
       });
+    });
+  }
+  if (dom.historyBodyFilters) {
+    dom.historyBodyFilters.addEventListener("click", function (e) {
+      const btn = e.target.closest(".history-body-btn");
+      if (!btn) return;
+      const next = btn.dataset.bodyFilter || "all";
+      if (state.historyBodyFilter === next) return;
+      state.historyBodyFilter = next;
+      hapticLight();
+      renderCompletions();
     });
   }
   if (dom.btnBackHistoryBottom) {

@@ -279,6 +279,80 @@ body::before {
   background: rgba(120, 172, 255, 0.2);
 }
 
+.history-body-filters {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  padding-bottom: 0.2rem;
+}
+
+.history-body-btn {
+  flex: none;
+  min-height: 1.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(139, 149, 168, 0.26);
+  background: rgba(139, 149, 168, 0.08);
+  color: var(--text-muted);
+  padding: 0 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.history-body-btn small {
+  opacity: 0.8;
+  font-size: 0.66rem;
+}
+
+.history-body-btn.active {
+  color: var(--text);
+  border-color: rgba(120, 172, 255, 0.55);
+  background: rgba(120, 172, 255, 0.2);
+}
+
+.insight-spark,
+.insight-pr {
+  grid-column: 1 / -1;
+  background: rgba(139, 149, 168, 0.12);
+  border: 1px solid rgba(139, 149, 168, 0.26);
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.65rem;
+}
+
+.insight-spark > span,
+.insight-pr > span {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.spark-bars {
+  height: 2.4rem;
+  margin-top: 0.35rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.spark-bar {
+  flex: 1;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(120, 172, 255, 0.95), rgba(120, 172, 255, 0.3));
+  min-height: 0.35rem;
+}
+
+.insight-pr strong {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.92rem;
+}
+
+.insight-pr small {
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
 .settings-card {
   width: 100%;
   background: linear-gradient(180deg, var(--surface) 0%, var(--bg-soft) 100%);
