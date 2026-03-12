@@ -625,8 +625,8 @@
     }).join("");
 
     const primaryCount = state.historyMode === "session" ? sessions7 : workouts7;
-    const primaryLabel = state.historyMode === "session" ? "sessions" : "exercise blocks";
-    const primarySub = state.historyMode === "session" ? "Grouped by 90m window" : "Raw workout entries";
+    const primaryLabel = state.historyMode === "session" ? "sessions" : "exercises";
+    const primarySub = state.historyMode === "session" ? "Grouped by 90m window" : "Raw exercise entries";
 
     dom.historyInsights.classList.remove("hidden");
     dom.historyInsights.innerHTML =
@@ -742,7 +742,7 @@
             "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
           "</div>" +
           "<div class=\"completion-meta\">" +
-            "<span>" + entries.length + " workouts</span>" +
+            "<span>" + entries.length + " exercises</span>" +
             "<span>Window " + Math.max(1, Math.round((session.newestTs - session.oldestTs) / 60000)) + "m</span>" +
             "<span>" + dateStr + " · " + timeStr + "</span>" +
           "</div>";
