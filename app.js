@@ -197,7 +197,27 @@
   function getCompletions() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
+      const list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list)) return [];
+
+      // One-time historical normalization:
+      // If all work sets were completed, treat entry as Full even when the
+      // final rest was cut short.
+      let changed = false;
+      const normalized = list.map(function (entry) {
+        if (!entry || typeof entry !== "object") return entry;
+        const total = entry.totalSets != null ? entry.totalSets : entry.sets;
+        const completedWork = entry.completedWork != null ? entry.completedWork : total;
+        if (total == null || completedWork == null) return entry;
+        if (completedWork >= total && entry.full !== true) {
+          changed = true;
+          return Object.assign({}, entry, { full: true });
+        }
+        return entry;
+      });
+
+      if (changed) saveCompletions(normalized);
+      return normalized;
     } catch (_) {
       return [];
     }
