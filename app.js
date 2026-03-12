@@ -461,6 +461,19 @@
     return entry.bodyPart || (entry.workoutPreset ? getBodyPartMeta(entry.workoutPreset).label : "Custom");
   }
 
+  function getMuscleGroupPriority(name) {
+    const order = {
+      Legs: 1,
+      Back: 2,
+      Chest: 3,
+      Delts: 4,
+      Arms: 5,
+      Abs: 6,
+      Custom: 7,
+    };
+    return order[name] || 99;
+  }
+
   function getLongestDailyStreak(daySet) {
     const days = Array.from(daySet).sort();
     let best = 0;
@@ -725,7 +738,9 @@
           year: newest.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
         });
         const timeStr = newest.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-        const parts = Array.from(new Set(entries.map(getEntryBodyPart)));
+        const parts = Array.from(new Set(entries.map(getEntryBodyPart))).sort(function (a, b) {
+          return getMuscleGroupPriority(a) - getMuscleGroupPriority(b);
+        });
         const totalSets = entries.reduce(function (sum, entry) {
           return sum + (entry.completedWork != null ? entry.completedWork : entry.sets || 0);
         }, 0);
