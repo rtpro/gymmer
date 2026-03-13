@@ -384,20 +384,14 @@
     }
 
     if (state.running) {
-      dom.btnStart.textContent = "Pause";
-      dom.btnStart.setAttribute("aria-label", "Pause timer");
-      dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
-      dom.btnStart.classList.add("running");
+      applyPrimaryTimerActionLabel();
       applyPausedUI(false);
       syncTimerFromTimestamp();
       if (state.running && !state.intervalId) {
         state.intervalId = setInterval(tick, 1000);
       }
     } else {
-      dom.btnStart.textContent = "Resume";
-      dom.btnStart.setAttribute("aria-label", "Resume timer");
-      dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
-      dom.btnStart.classList.remove("running");
+      applyPrimaryTimerActionLabel();
       applyPausedUI(true);
       updateProgressRing();
     }
@@ -945,6 +939,7 @@
     dom.timerDisplay.classList.remove("done");
     updateProgressRing();
     updateRestBadgeUrgency();
+    applyPrimaryTimerActionLabel();
         saveSessionState();
     updateTimerNotification(true);
   }
@@ -1184,6 +1179,42 @@
     return "Work";
   }
 
+  function isFinalRestPhase() {
+    return state.running && state.phase === "rest" && state.setsRemaining === 1;
+  }
+
+  function applyPrimaryTimerActionLabel() {
+    if (state.setsRemaining <= 0) return;
+    if (!state.running) {
+      dom.btnStart.textContent = "Resume";
+      dom.btnStart.setAttribute("aria-label", "Resume timer");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
+      dom.btnStart.classList.remove("running");
+      return;
+    }
+    if (isFinalRestPhase()) {
+      dom.btnStart.textContent = "Done";
+      dom.btnStart.setAttribute("aria-label", "Finish exercise");
+      dom.timerDisplayBtn.setAttribute("aria-label", "Finish exercise");
+      dom.btnStart.classList.add("running");
+      return;
+    }
+    dom.btnStart.textContent = "Pause";
+    dom.btnStart.setAttribute("aria-label", "Pause timer");
+    dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
+    dom.btnStart.classList.add("running");
+  }
+
+  function completeWorkoutNow() {
+    state.restPhasesCompleted = state.totalSets;
+    state.setsRemaining = 0;
+    saveCompletion(state.totalSets, state.totalSets, true);
+    stopTimer();
+    updateSetDisplay();
+    soundDone();
+    hapticStrong();
+  }
+
   function applyPausedUI(paused) {
     if (paused) {
       dom.phaseBadge.textContent = "Paused";
@@ -1209,10 +1240,7 @@
     releaseWakeLock();
     haptic();
     applyPausedUI(true);
-    dom.btnStart.textContent = "Resume";
-    dom.btnStart.setAttribute("aria-label", "Resume timer");
-    dom.timerDisplayBtn.setAttribute("aria-label", "Resume timer");
-    dom.btnStart.classList.remove("running");
+    applyPrimaryTimerActionLabel();
     saveSessionState();
     closeTimerNotification();
   }
@@ -1223,10 +1251,7 @@
     setPhaseEndTimestamp();
     requestWakeLock();
     applyPausedUI(false);
-    dom.btnStart.textContent = "Pause";
-    dom.btnStart.setAttribute("aria-label", "Pause timer");
-    dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
-    dom.btnStart.classList.add("running");
+    applyPrimaryTimerActionLabel();
     state.intervalId = setInterval(tick, 1000);
     saveSessionState();
     updateTimerNotification(true);
@@ -1239,10 +1264,7 @@
     goToTimer();
     state.running = true;
     requestWakeLock();
-    dom.btnStart.textContent = "Pause";
-    dom.btnStart.setAttribute("aria-label", "Pause timer");
-    dom.timerDisplayBtn.setAttribute("aria-label", "Pause timer");
-    dom.btnStart.classList.add("running");
+    applyPrimaryTimerActionLabel();
     dom.btnReset.textContent = "Hold to reset";
     dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
     dom.btnReset.classList.remove("btn-primary");
@@ -1259,6 +1281,10 @@
 
   function startStop() {
     if (state.running) {
+      if (isFinalRestPhase()) {
+        completeWorkoutNow();
+        return;
+      }
       pauseTimer();
     } else {
       resumeTimer();
