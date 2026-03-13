@@ -776,12 +776,16 @@
         const bodyPart = getEntryBodyPart(entry);
         const title = bodyPart + " • " + w + (total ? "/" + total : "") + " sets";
 
+        const entryIndex = list.indexOf(entry);
         const li = document.createElement("li");
         li.className = "completion-item";
         li.innerHTML =
           "<div class=\"completion-top\">" +
             "<span class=\"completion-summary\">" + title + "</span>" +
-            "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
+            "<div class=\"completion-top-actions\">" +
+              "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
+              "<button type=\"button\" class=\"completion-delete-btn\" data-entry-index=\"" + entryIndex + "\" aria-label=\"Delete this exercise log\" title=\"Delete log\">Delete</button>" +
+            "</div>" +
           "</div>" +
           "<div class=\"completion-meta\">" +
             "<span>Work " + workStr + "</span>" +
@@ -797,6 +801,14 @@
 
   function clearHistory() {
     saveCompletions([]);
+    renderCompletions();
+  }
+
+  function deleteHistoryEntry(index) {
+    const list = getCompletions();
+    if (isNaN(index) || index < 0 || index >= list.length) return;
+    list.splice(index, 1);
+    saveCompletions(list);
     renderCompletions();
   }
 
@@ -1564,6 +1576,16 @@
   dom.btnClearHistory.addEventListener("click", function () {
     haptic();
     clearHistory();
+  });
+  dom.completionsList.addEventListener("click", function (e) {
+    const btn = e.target.closest(".completion-delete-btn");
+    if (!btn) return;
+    const entryIndex = parseInt(btn.dataset.entryIndex, 10);
+    if (isNaN(entryIndex)) return;
+    const ok = window.confirm("Delete this exercise log?");
+    if (!ok) return;
+    hapticLight();
+    deleteHistoryEntry(entryIndex);
   });
   dom.btnViewHistory.addEventListener("click", function () {
     haptic();

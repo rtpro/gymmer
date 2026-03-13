@@ -879,6 +879,12 @@ body::before {
   color: var(--text);
 }
 
+.completion-top-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
 .completion-status {
   font-size: 0.7rem;
   font-weight: 700;
@@ -908,6 +914,23 @@ body::before {
   gap: 0.4rem 0.75rem;
   color: var(--text-muted);
   font-size: 0.78rem;
+}
+
+.completion-delete-btn {
+  border: 1px solid rgba(235, 109, 109, 0.45);
+  background: rgba(235, 109, 109, 0.12);
+  color: #ffb0b0;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.completion-delete-btn:hover {
+  background: rgba(235, 109, 109, 0.2);
+  border-color: rgba(235, 109, 109, 0.6);
 }
 
 .completion-body-part {
