@@ -422,6 +422,13 @@
     const w = state.workPhasesCompleted;
     const r = state.restPhasesCompleted;
 
+    // When workout is already finished (Done state), completion was already
+    // persisted by the phase-transition handler. Avoid duplicate history rows.
+    if (state.setsRemaining <= 0) {
+      clearSessionState();
+      return;
+    }
+
     // If all work phases were completed, treat workout as completed even if
     // the last rest was shortened via hold-to-reset.
     if (w >= state.totalSets && state.totalSets > 0) {
@@ -1172,6 +1179,7 @@
       state.setsRemaining -= 1;
       if (state.setsRemaining <= 0) {
         saveCompletion(state.totalSets, state.totalSets, true);
+        clearSessionState();
         stopTimer();
         updateSetDisplay();
         soundDone();
@@ -1221,6 +1229,7 @@
     state.restPhasesCompleted = state.totalSets;
     state.setsRemaining = 0;
     saveCompletion(state.totalSets, state.totalSets, true);
+    clearSessionState();
     stopTimer();
     updateSetDisplay();
     soundDone();
