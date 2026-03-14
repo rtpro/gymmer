@@ -11,6 +11,7 @@
   const SESSION_KEY = "gymmer_session_v1";
   const MAX_COMPLETIONS = 50;
   const SESSION_GROUP_WINDOW_MS = 90 * 60 * 1000;
+  const HISTORY_DEDUPE_MIGRATION_KEY = "gymmer_history_dedupe_v1_done";
 
   const BODY_PART_META = {
     chest: { label: "Chest", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"9.7\" y=\"7.9\" width=\"4.6\" height=\"2.7\" rx=\".7\" fill=\"currentColor\"/></svg>" },
@@ -216,8 +217,57 @@
         return entry;
       });
 
-      if (changed) saveCompletions(normalized);
-      return normalized;
+      // One-time cleanup for historical duplicate full logs caused by the
+      // prior done/reset double-save path.
+      let dedupeRan = false;
+      try {
+        dedupeRan = localStorage.getItem(HISTORY_DEDUPE_MIGRATION_KEY) === "1";
+      } catch (_) {}
+
+      let cleaned = normalized;
+      if (!dedupeRan) {
+        const dedupeWindowMs = 10 * 60 * 1000;
+        const result = [];
+        normalized.forEach(function (entry) {
+          if (!entry || typeof entry !== "object") return;
+          const total = entry.totalSets != null ? entry.totalSets : entry.sets;
+          const completedWork = entry.completedWork != null ? entry.completedWork : total;
+          const completedRest = entry.completedRest != null ? entry.completedRest : completedWork;
+          const ts = new Date(entry.date).getTime();
+          const prev = result.length ? result[result.length - 1] : null;
+
+          let isDuplicate = false;
+          if (prev && prev.full === true && entry.full === true) {
+            const prevTotal = prev.totalSets != null ? prev.totalSets : prev.sets;
+            const prevCompletedWork = prev.completedWork != null ? prev.completedWork : prevTotal;
+            const prevCompletedRest = prev.completedRest != null ? prev.completedRest : prevCompletedWork;
+            const prevTs = new Date(prev.date).getTime();
+            const closeInTime = !isNaN(ts) && !isNaN(prevTs) && Math.abs(prevTs - ts) <= dedupeWindowMs;
+            const sameShape =
+              prev.workSeconds === entry.workSeconds &&
+              prev.restSeconds === entry.restSeconds &&
+              prevTotal === total &&
+              prevCompletedWork === completedWork &&
+              prevCompletedRest === completedRest &&
+              (prev.workoutPreset || "") === (entry.workoutPreset || "") &&
+              (prev.bodyPart || "") === (entry.bodyPart || "");
+            isDuplicate = closeInTime && sameShape;
+          }
+
+          if (!isDuplicate) {
+            result.push(entry);
+          } else {
+            changed = true;
+          }
+        });
+        cleaned = result;
+        try {
+          localStorage.setItem(HISTORY_DEDUPE_MIGRATION_KEY, "1");
+        } catch (_) {}
+      }
+
+      if (changed) saveCompletions(cleaned);
+      return cleaned;
     } catch (_) {
       return [];
     }
