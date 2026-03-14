@@ -784,7 +784,7 @@
             "<span class=\"completion-summary\">" + title + "</span>" +
             "<div class=\"completion-top-actions\">" +
               "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
-              "<button type=\"button\" class=\"completion-delete-btn\" data-entry-index=\"" + entryIndex + "\" aria-label=\"Delete this exercise log\" title=\"Delete log\">Delete</button>" +
+              "<button type=\"button\" class=\"completion-delete-btn\" data-entry-index=\"" + entryIndex + "\" aria-label=\"Delete this exercise log\" title=\"Delete log\">🗑</button>" +
             "</div>" +
           "</div>" +
           "<div class=\"completion-meta\">" +
