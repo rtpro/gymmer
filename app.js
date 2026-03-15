@@ -14,12 +14,30 @@
   const HISTORY_DEDUPE_MIGRATION_KEY = "gymmer_history_dedupe_v1_done";
 
   const BODY_PART_META = {
-    chest: { label: "Chest", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"9.7\" y=\"7.9\" width=\"4.6\" height=\"2.7\" rx=\".7\" fill=\"currentColor\"/></svg>" },
-    arms: { label: "Arms", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"5.8\" y=\"8.2\" width=\"2.1\" height=\"6.2\" rx=\"1\" fill=\"currentColor\"/><rect x=\"16.1\" y=\"8.2\" width=\"2.1\" height=\"6.2\" rx=\"1\" fill=\"currentColor\"/></svg>" },
-    abs: { label: "Abs", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"10.1\" y=\"10.5\" width=\"3.8\" height=\"4.2\" rx=\".8\" fill=\"currentColor\"/></svg>" },
-    back: { label: "Back", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"9.8\" y=\"8.2\" width=\"4.4\" height=\"7.8\" rx=\"1\" fill=\"currentColor\"/></svg>" },
-    legs: { label: "Legs", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><rect x=\"9.4\" y=\"15.2\" width=\"1.9\" height=\"4.3\" rx=\".8\" fill=\"currentColor\"/><rect x=\"12.7\" y=\"15.2\" width=\"1.9\" height=\"4.3\" rx=\".8\" fill=\"currentColor\"/></svg>" },
-    delts: { label: "Delts", icon: "<svg viewBox=\"0 0 24 24\"><circle cx=\"12\" cy=\"3.8\" r=\"1.8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M9 7.2c.6-.7 1.8-1.1 3-1.1s2.4.4 3 1.1l.6 1.4c.4.9.4 2 .1 2.9l-1 2.5v6.2h-2v-4h-1.4v4h-2V14l-1-2.5c-.3-.9-.3-2 .1-2.9z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" opacity=\".9\"/><circle cx=\"9.1\" cy=\"8.1\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"14.9\" cy=\"8.1\" r=\"1.1\" fill=\"currentColor\"/></svg>" },
+    chest: {
+      label: "Chest",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-1 3.1V20h-2.2v-3.9h-2.2V20H8.7v-5.5l-1-3.1c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".85"/><path d="M9.2 9.5c.8-.7 1.8-1.1 2.8-1.1 1 0 2 .4 2.8 1.1"/><path d="M8.8 12.2l3.3-.8M15.2 12.2l-3.3-.8"/></svg>`,
+    },
+    arms: {
+      label: "Arms",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-1 3.1V20h-2.2v-3.9h-2.2V20H8.7v-5.5l-1-3.1c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".78"/><path d="M6.3 10.3c1.1 0 2 .9 2 2v1.9c0 1.1-.9 2-2 2s-2-.9-2-2v-1.9c0-1.1.9-2 2-2z" fill="currentColor" stroke="none" opacity=".95"/><path d="M17.7 10.3c1.1 0 2 .9 2 2v1.9c0 1.1-.9 2-2 2s-2-.9-2-2v-1.9c0-1.1.9-2 2-2z" fill="currentColor" stroke="none" opacity=".95"/></svg>`,
+    },
+    abs: {
+      label: "Abs",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-1 3.1V20h-2.2v-3.9h-2.2V20H8.7v-5.5l-1-3.1c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".72"/><rect x="9.15" y="9.2" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/><rect x="13.05" y="9.2" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/><rect x="9.15" y="12" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/><rect x="13.05" y="12" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/><rect x="9.15" y="14.8" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/><rect x="13.05" y="14.8" width="1.8" height="2.1" rx=".6" fill="currentColor" stroke="none"/></svg>`,
+    },
+    back: {
+      label: "Back",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-1 3.1V20h-2.2v-3.9h-2.2V20H8.7v-5.5l-1-3.1c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".82"/><path d="M12 8.6v8.4"/><path d="M9.4 9.4c.4 1.2.5 2.3.2 3.4M14.6 9.4c-.4 1.2-.5 2.3-.2 3.4"/><path d="M9.3 14.5c.7.9 1.6 1.4 2.7 1.4 1.1 0 2-.5 2.7-1.4"/></svg>`,
+    },
+    legs: {
+      label: "Legs",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-.6 1.8h-1.9L13.5 20h-2.1l-.3-6.8H9.2l-.6-1.8c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".78"/><path d="M10.3 13.4h1.4l-.3 6.4h-2c-.6 0-1-.5-1-1.1l.3-3.8c.1-.9.8-1.5 1.6-1.5z" fill="currentColor" stroke="none"/><path d="M12.3 13.4h1.4c.8 0 1.5.6 1.6 1.5l.3 3.8c0 .6-.4 1.1-1 1.1h-2l-.3-6.4z" fill="currentColor" stroke="none"/></svg>`,
+    },
+    delts: {
+      label: "Delts",
+      icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.2c1.2 0 2.3.4 3.1 1.2l.8 1.2c.5.8.7 1.8.4 2.8l-1 3.1V20h-2.2v-3.9h-2.2V20H8.7v-5.5l-1-3.1c-.3-1 0-2 .4-2.8l.8-1.2c.8-.8 1.9-1.2 3.1-1.2z" opacity=".78"/><circle cx="8.9" cy="8.9" r="1.5" fill="currentColor" stroke="none"/><circle cx="15.1" cy="8.9" r="1.5" fill="currentColor" stroke="none"/><path d="M10.1 10.2c.5-.2 1.2-.4 1.9-.4.7 0 1.4.2 1.9.4"/></svg>`,
+    },
     custom: { label: "Custom", icon: "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"8\"/><path d=\"M12 8v8\"/><path d=\"M8 12h8\"/></svg>" },
   };
 
