@@ -467,8 +467,11 @@
   function renderTimerMuscleGroup() {
     if (!dom.timerMuscleGroup) return;
     const meta = getBodyPartMeta(getResolvedWorkoutPreset());
-    const valueEl = dom.timerMuscleGroup.querySelector(".timer-muscle-group__value");
-    if (valueEl) valueEl.textContent = meta.label;
+    const iconEl = dom.timerMuscleGroup.querySelector(".timer-muscle-group__icon");
+    if (iconEl) iconEl.innerHTML = meta.icon;
+    dom.timerMuscleGroup.setAttribute("aria-label", "Muscle group: " + meta.label);
+    dom.timerMuscleGroup.setAttribute("title", "Muscle group: " + meta.label);
+    dom.timerMuscleGroup.setAttribute("data-muscle", meta.label.toLowerCase());
   }
 
   function syncTimerMuscleGroupTone(phase, paused) {
