@@ -865,6 +865,7 @@
             "<span class=\"completion-summary\">" + title + "</span>" +
             "<div class=\"completion-top-actions\">" +
               "<span class=\"completion-status " + statusClass + "\">" + statusLabel + "</span>" +
+              "<button type=\"button\" class=\"completion-edit-btn\" data-entry-index=\"" + entryIndex + "\" aria-label=\"Change muscle group\" title=\"Change muscle group\">✎</button>" +
               "<button type=\"button\" class=\"completion-delete-btn\" data-entry-index=\"" + entryIndex + "\" aria-label=\"Delete this exercise log\" title=\"Delete log\">🗑</button>" +
             "</div>" +
           "</div>" +
@@ -889,6 +890,34 @@
     const list = getCompletions();
     if (isNaN(index) || index < 0 || index >= list.length) return;
     list.splice(index, 1);
+    saveCompletions(list);
+    renderCompletions();
+  }
+
+  function resolvePresetIdFromBodyPartLabel(label) {
+    const normalized = String(label || "").trim().toLowerCase();
+    const keys = Object.keys(BODY_PART_META);
+    for (let i = 0; i < keys.length; i += 1) {
+      const key = keys[i];
+      if (BODY_PART_META[key].label.toLowerCase() === normalized) return key;
+    }
+    return null;
+  }
+
+  function updateHistoryEntryBodyPart(index, bodyPartLabel) {
+    const list = getCompletions();
+    if (isNaN(index) || index < 0 || index >= list.length) return;
+
+    const normalizedLabel = String(bodyPartLabel || "").trim();
+    if (!normalizedLabel) return;
+
+    const entry = list[index];
+    const presetId = resolvePresetIdFromBodyPartLabel(normalizedLabel);
+    const bodyPart = presetId ? BODY_PART_META[presetId].label : normalizedLabel;
+
+    entry.bodyPart = bodyPart;
+    entry.workoutPreset = presetId;
+
     saveCompletions(list);
     renderCompletions();
   }
@@ -1662,6 +1691,27 @@
     clearHistory();
   });
   dom.completionsList.addEventListener("click", function (e) {
+    const editBtn = e.target.closest(".completion-edit-btn");
+    if (editBtn) {
+      const entryIndex = parseInt(editBtn.dataset.entryIndex, 10);
+      if (isNaN(entryIndex)) return;
+      const options = ["Chest", "Back", "Legs", "Delts", "Arms", "Abs", "Custom"];
+      const currentEntry = getCompletions()[entryIndex];
+      const current = currentEntry ? getEntryBodyPart(currentEntry) : "Custom";
+      const input = window.prompt("Change muscle group (" + options.join(", ") + ")", current);
+      if (input == null) return;
+      const next = input.trim();
+      if (!next) return;
+      const canonical = options.find(function (label) { return label.toLowerCase() === next.toLowerCase(); });
+      if (!canonical) {
+        window.alert("Invalid muscle group. Use one of: " + options.join(", "));
+        return;
+      }
+      hapticLight();
+      updateHistoryEntryBodyPart(entryIndex, canonical);
+      return;
+    }
+
     const btn = e.target.closest(".completion-delete-btn");
     if (!btn) return;
     const entryIndex = parseInt(btn.dataset.entryIndex, 10);
