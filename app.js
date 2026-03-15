@@ -448,9 +448,21 @@
     return true;
   }
 
+  function inferWorkoutPresetFromCurrentConfig() {
+    const matches = Array.from(dom.workoutPresetBtns).filter(function (btn) {
+      return (
+        parseInt(btn.dataset.sets, 10) === state.totalSets &&
+        parseInt(btn.dataset.work, 10) === state.workSeconds &&
+        parseInt(btn.dataset.rest, 10) === state.restSeconds
+      );
+    });
+    return matches.length === 1 ? matches[0].dataset.preset : null;
+  }
+
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
-    const bodyPartMeta = getBodyPartMeta(state.selectedWorkoutPreset);
+    const resolvedPreset = state.selectedWorkoutPreset || inferWorkoutPresetFromCurrentConfig();
+    const bodyPartMeta = getBodyPartMeta(resolvedPreset);
     const bodyPart = bodyPartMeta ? bodyPartMeta.label : null;
 
     list.unshift({
@@ -461,7 +473,7 @@
       completedRest: completedRest,
       totalSets: state.totalSets,
       full: !!full,
-      workoutPreset: state.selectedWorkoutPreset,
+      workoutPreset: resolvedPreset,
       bodyPart: bodyPart,
     });
     saveCompletions(list.slice(0, MAX_COMPLETIONS));
