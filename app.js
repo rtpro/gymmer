@@ -158,6 +158,7 @@
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
     presetStatus: document.getElementById("preset-status"),
+    timerMuscleGroup: document.getElementById("timer-muscle-group"),
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
@@ -459,9 +460,19 @@
     return matches.length === 1 ? matches[0].dataset.preset : null;
   }
 
+  function getResolvedWorkoutPreset() {
+    return state.selectedWorkoutPreset || inferWorkoutPresetFromCurrentConfig();
+  }
+
+  function renderTimerMuscleGroup() {
+    if (!dom.timerMuscleGroup) return;
+    const meta = getBodyPartMeta(getResolvedWorkoutPreset());
+    dom.timerMuscleGroup.textContent = "Muscle group: " + meta.label;
+  }
+
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
-    const resolvedPreset = state.selectedWorkoutPreset || inferWorkoutPresetFromCurrentConfig();
+    const resolvedPreset = getResolvedWorkoutPreset();
     const bodyPartMeta = getBodyPartMeta(resolvedPreset);
     const bodyPart = bodyPartMeta ? bodyPartMeta.label : null;
 
@@ -1466,6 +1477,7 @@
       btn.classList.toggle("active", btn.dataset.preset === state.selectedWorkoutPreset);
     });
     renderWorkoutPresetStatus();
+    renderTimerMuscleGroup();
   }
 
   function syncCustomInputs() {

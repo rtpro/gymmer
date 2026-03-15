@@ -539,6 +539,13 @@ body::before {
   box-shadow: 0 0 0 1px rgba(139, 149, 168, 0.4);
 }
 
+.timer-muscle-group {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  text-align: center;
+  min-height: 1.2rem;
+}
 
 .timer-display {
   width: min(300px, 85vw);
