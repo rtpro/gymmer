@@ -843,6 +843,18 @@ body::before {
   opacity: 0.92;
 }
 
+.preset-icon .muscle-base,
+.timer-muscle-group__icon .muscle-base {
+  fill: currentColor;
+  opacity: 0.34;
+}
+
+.preset-icon .muscle-focus,
+.timer-muscle-group__icon .muscle-focus {
+  fill: currentColor;
+  opacity: 0.96;
+}
+
 .preset-btn-workout.active {
   color: var(--text);
   background: var(--surface-hover);
