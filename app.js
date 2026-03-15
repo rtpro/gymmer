@@ -471,6 +471,18 @@
     if (valueEl) valueEl.textContent = meta.label;
   }
 
+  function syncTimerMuscleGroupTone(phase, paused) {
+    if (!dom.timerMuscleGroup) return;
+    dom.timerMuscleGroup.classList.remove("is-work", "is-rest", "is-prep", "is-paused");
+    if (paused) {
+      dom.timerMuscleGroup.classList.add("is-paused");
+      return;
+    }
+    if (phase === "work" || phase === "rest" || phase === "prep") {
+      dom.timerMuscleGroup.classList.add("is-" + phase);
+    }
+  }
+
   function saveCompletion(completedWork, completedRest, full) {
     const list = getCompletions();
     const resolvedPreset = getResolvedWorkoutPreset();
@@ -1047,6 +1059,7 @@
       dom.phaseBadge.textContent = "Get ready";
       dom.phaseBadge.className = "phase-badge prep";
       dom.timerDisplay.className = "timer-display prep";
+      syncTimerMuscleGroupTone("prep", false);
       dom.timerValue.classList.remove("done-text");
       setTimerValue(String(PREP_SECONDS));
     } else {
@@ -1054,6 +1067,7 @@
       dom.phaseBadge.textContent = phase === "work" ? "Work" : "Rest";
       dom.phaseBadge.className = "phase-badge " + phase;
       dom.timerDisplay.className = "timer-display " + phase;
+      syncTimerMuscleGroupTone(phase, false);
       dom.timerValue.classList.remove("done-text");
       setTimerValue(formatTime(state.remainingSeconds));
     }
@@ -1240,6 +1254,7 @@
     renderSetDots();
         if (state.setsRemaining <= 0) {
       dom.timerDisplay.classList.add("done");
+      syncTimerMuscleGroupTone(state.phase, true);
       dom.phaseBadge.classList.remove("urgent");
             setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
@@ -1344,10 +1359,12 @@
       dom.phaseBadge.textContent = "Paused";
       dom.phaseBadge.className = "phase-badge paused";
       dom.timerDisplay.classList.add("paused");
+      syncTimerMuscleGroupTone(state.phase, true);
     } else {
       dom.phaseBadge.textContent = getPhaseLabel();
       dom.phaseBadge.className = "phase-badge " + state.phase;
       dom.timerDisplay.classList.remove("paused");
+      syncTimerMuscleGroupTone(state.phase, false);
       updateRestBadgeUrgency();
     }
       }
@@ -1548,6 +1565,7 @@
   }
   syncPresetActiveStates();
   syncCustomInputs();
+  syncTimerMuscleGroupTone(state.phase, !state.running);
   renderCompletions();
   if (state.running && state.setsRemaining > 0) {
     updateTimerNotification(true);

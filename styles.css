@@ -540,30 +540,63 @@ body::before {
 }
 
 .timer-muscle-group {
-  min-height: 1.85rem;
+  --mg-accent: rgba(139, 149, 168, 0.65);
+  min-height: 1.9rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.35rem 0.8rem;
+  gap: 0.42rem;
+  padding: 0.36rem 0.86rem;
   border-radius: 999px;
-  background: rgba(139, 149, 168, 0.1);
-  border: 1px solid rgba(139, 149, 168, 0.24);
-  backdrop-filter: blur(6px);
+  background: linear-gradient(180deg, rgba(24, 33, 53, 0.68) 0%, rgba(18, 25, 42, 0.82) 100%);
+  border: 1px solid rgba(139, 149, 168, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px rgba(5, 10, 20, 0.22);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.timer-muscle-group::before {
+  content: "";
+  width: 0.36rem;
+  height: 0.36rem;
+  border-radius: 50%;
+  background: var(--mg-accent);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--mg-accent) 65%, transparent);
 }
 
 .timer-muscle-group__label {
-  font-size: 0.72rem;
-  color: var(--text-muted);
+  font-size: 0.66rem;
+  color: color-mix(in srgb, var(--text-muted) 82%, white);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
+  opacity: 0.92;
 }
 
 .timer-muscle-group__value {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.01em;
+}
+
+.timer-muscle-group.is-work {
+  --mg-accent: rgba(255, 100, 100, 0.9);
+  border-color: rgba(255, 100, 100, 0.26);
+}
+
+.timer-muscle-group.is-rest {
+  --mg-accent: rgba(143, 187, 255, 0.92);
+  border-color: rgba(143, 187, 255, 0.28);
+}
+
+.timer-muscle-group.is-prep {
+  --mg-accent: rgba(189, 129, 255, 0.92);
+  border-color: rgba(189, 129, 255, 0.28);
+}
+
+.timer-muscle-group.is-paused {
+  --mg-accent: rgba(139, 149, 168, 0.68);
+  border-color: rgba(139, 149, 168, 0.22);
 }
 
 .timer-display {
