@@ -467,7 +467,8 @@
   function renderTimerMuscleGroup() {
     if (!dom.timerMuscleGroup) return;
     const meta = getBodyPartMeta(getResolvedWorkoutPreset());
-    dom.timerMuscleGroup.textContent = "Muscle group: " + meta.label;
+    const valueEl = dom.timerMuscleGroup.querySelector(".timer-muscle-group__value");
+    if (valueEl) valueEl.textContent = meta.label;
   }
 
   function saveCompletion(completedWork, completedRest, full) {
