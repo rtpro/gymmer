@@ -1,4 +1,4 @@
-const CACHE_NAME = "gymmer-v53";
+const CACHE_NAME = "gymmer-v54";
 const ASSETS = ["index.html", "styles.css", "app.js", "manifest.json", "icon.svg"];
 
 self.addEventListener("install", function (e) {
