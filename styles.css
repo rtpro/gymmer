@@ -541,9 +541,9 @@ body::before {
 
 .timer-muscle-group {
   --mg-accent: rgba(139, 149, 168, 0.65);
-  min-width: 7.25rem;
+  min-width: 7.45rem;
   min-height: 3rem;
-  padding: 0.45rem 0.8rem 0.45rem 0.65rem;
+  padding: 0.45rem 0.92rem 0.45rem 0.72rem;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
@@ -1092,11 +1092,11 @@ body::before {
 }
 
 .timer-actions .btn-reset-icon {
-  flex: 0 0 3.1rem;
-  min-width: 3.1rem;
-  width: 3.1rem;
+  flex: 0 0 2.65rem;
+  min-width: 2.65rem;
+  width: 2.65rem;
   padding: 0;
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   line-height: 1;
   border-width: 1px;
 }
@@ -1251,8 +1251,8 @@ body::before {
   }
 
   .timer-muscle-group {
-    min-width: 6.5rem;
-    padding-inline: 0.62rem;
+    min-width: 6.7rem;
+    padding-inline: 0.7rem;
   }
 
   .timer-muscle-group__label {
