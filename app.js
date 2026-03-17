@@ -171,12 +171,14 @@
     btnStartWorkout: document.getElementById("btn-start-workout"),
     btnStart: document.getElementById("btn-start"),
     btnReset: document.getElementById("btn-reset"),
+    btnResetIcon: document.getElementById("btn-reset-icon"),
     timerActions: document.querySelector(".timer-actions"),
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
     presetStatus: document.getElementById("preset-status"),
     timerMuscleGroup: document.getElementById("timer-muscle-group"),
+    timerMuscleGroupLabel: document.getElementById("timer-muscle-group-label"),
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
     completionsList: document.getElementById("completions-list"),
@@ -441,8 +443,7 @@
     }
     updateRestBadgeUrgency();
     
-    dom.btnReset.textContent = "Hold to reset";
-    dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+    setResetActionCopy(false);
     dom.btnReset.classList.remove("btn-primary");
     dom.btnReset.classList.add("btn-secondary");
     dom.timerActions.classList.remove("done");
@@ -487,9 +488,23 @@
     const meta = getBodyPartMeta(getResolvedWorkoutPreset());
     const iconEl = dom.timerMuscleGroup.querySelector(".timer-muscle-group__icon");
     if (iconEl) iconEl.innerHTML = meta.icon;
+    if (dom.timerMuscleGroupLabel) dom.timerMuscleGroupLabel.textContent = meta.label;
     dom.timerMuscleGroup.setAttribute("aria-label", "Muscle group: " + meta.label);
     dom.timerMuscleGroup.setAttribute("title", "Muscle group: " + meta.label);
     dom.timerMuscleGroup.setAttribute("data-muscle", meta.label.toLowerCase());
+  }
+
+  let muscleFlashTimeout = null;
+  function flashTimerMuscleGroup() {
+    if (!dom.timerMuscleGroup) return;
+    dom.timerMuscleGroup.classList.remove("is-flash");
+    if (muscleFlashTimeout) clearTimeout(muscleFlashTimeout);
+    void dom.timerMuscleGroup.offsetWidth;
+    dom.timerMuscleGroup.classList.add("is-flash");
+    muscleFlashTimeout = setTimeout(function () {
+      dom.timerMuscleGroup.classList.remove("is-flash");
+      muscleFlashTimeout = null;
+    }, 320);
   }
 
   function syncTimerMuscleGroupTone(phase, paused) {
@@ -1081,6 +1096,7 @@
       dom.phaseBadge.className = "phase-badge prep";
       dom.timerDisplay.className = "timer-display prep";
       syncTimerMuscleGroupTone("prep", false);
+      flashTimerMuscleGroup();
       dom.timerValue.classList.remove("done-text");
       setTimerValue(String(PREP_SECONDS));
     } else {
@@ -1089,6 +1105,7 @@
       dom.phaseBadge.className = "phase-badge " + phase;
       dom.timerDisplay.className = "timer-display " + phase;
       syncTimerMuscleGroupTone(phase, false);
+      flashTimerMuscleGroup();
       dom.timerValue.classList.remove("done-text");
       setTimerValue(formatTime(state.remainingSeconds));
     }
@@ -1285,8 +1302,7 @@
       dom.timerDisplayBtn.setAttribute("aria-label", "Start next exercise");
       dom.btnStart.classList.remove("btn-primary");
       dom.btnStart.classList.add("btn-secondary");
-      dom.btnReset.textContent = "Done";
-      dom.btnReset.setAttribute("aria-label", "Go back to settings");
+      setResetActionCopy(true);
       dom.btnReset.classList.remove("btn-secondary");
       dom.btnReset.classList.add("btn-primary");
       dom.timerActions.classList.add("done");
@@ -1364,6 +1380,18 @@
     dom.btnStart.classList.add("running");
   }
 
+  function setResetActionCopy(doneMode) {
+    if (doneMode) {
+      dom.btnReset.textContent = "Done";
+      dom.btnReset.setAttribute("aria-label", "Go back to settings");
+      if (dom.btnResetIcon) dom.btnResetIcon.setAttribute("aria-label", "Go back to settings");
+      return;
+    }
+    dom.btnReset.textContent = "Hold to reset";
+    dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+    if (dom.btnResetIcon) dom.btnResetIcon.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+  }
+
   function completeWorkoutNow() {
     state.restPhasesCompleted = state.totalSets;
     state.setsRemaining = 0;
@@ -1427,8 +1455,7 @@
     state.running = true;
     requestWakeLock();
     applyPrimaryTimerActionLabel();
-    dom.btnReset.textContent = "Hold to reset";
-    dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
+    setResetActionCopy(false);
     dom.btnReset.classList.remove("btn-primary");
     dom.btnReset.classList.add("btn-secondary");
     dom.btnStart.classList.remove("btn-secondary");
@@ -1597,6 +1624,7 @@
   const RESET_HOLD_MS = 1200;
   let resetHoldTimer = null;
   let resetHoldPointerId = null;
+  let resetHoldTarget = null;
 
   function clearResetHold(pointerId) {
     if (pointerId != null && resetHoldPointerId != null && pointerId !== resetHoldPointerId) return;
@@ -1604,15 +1632,59 @@
       clearTimeout(resetHoldTimer);
       resetHoldTimer = null;
     }
-    if (resetHoldPointerId != null) {
+    if (resetHoldTarget && resetHoldPointerId != null) {
       try {
-        if (dom.btnReset.hasPointerCapture(resetHoldPointerId)) {
-          dom.btnReset.releasePointerCapture(resetHoldPointerId);
+        if (resetHoldTarget.hasPointerCapture(resetHoldPointerId)) {
+          resetHoldTarget.releasePointerCapture(resetHoldPointerId);
         }
       } catch (_) {}
-      resetHoldPointerId = null;
     }
-    dom.btnReset.classList.remove("holding");
+    resetHoldPointerId = null;
+    if (resetHoldTarget) {
+      resetHoldTarget.classList.remove("holding");
+      resetHoldTarget = null;
+    }
+  }
+
+  function attachResetHoldBehavior(buttonEl) {
+    if (!buttonEl) return;
+    buttonEl.addEventListener("click", function () {
+      if (state.setsRemaining <= 0 && !state.running) {
+        haptic();
+        goToSettings(true);
+      }
+    });
+
+    buttonEl.addEventListener("pointerdown", function (e) {
+      if (e.button !== 0) return;
+      if (state.setsRemaining <= 0 && !state.running) return;
+      if (resetHoldPointerId != null) return;
+      haptic();
+      clearResetHold();
+      resetHoldPointerId = e.pointerId;
+      resetHoldTarget = buttonEl;
+      try {
+        buttonEl.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      buttonEl.classList.add("holding");
+      resetHoldTimer = setTimeout(function () {
+        clearResetHold();
+        reset();
+      }, RESET_HOLD_MS);
+    });
+
+    buttonEl.addEventListener("pointerup", function (e) {
+      clearResetHold(e.pointerId);
+    });
+    buttonEl.addEventListener("pointercancel", function (e) {
+      clearResetHold(e.pointerId);
+    });
+    buttonEl.addEventListener("lostpointercapture", function (e) {
+      clearResetHold(e.pointerId);
+    });
+    buttonEl.addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+    });
   }
 
   dom.btnStartWorkout.addEventListener("click", function () {
@@ -1627,40 +1699,8 @@
       startStop();
     }
   });
-  dom.btnReset.addEventListener("click", function () {
-    if (state.setsRemaining <= 0 && !state.running) {
-      haptic();
-      goToSettings(true);
-    }
-  });
-  dom.btnReset.addEventListener("pointerdown", function (e) {
-    if (e.button !== 0) return;
-    if (state.setsRemaining <= 0 && !state.running) return;
-    if (resetHoldPointerId != null) return;
-    haptic();
-    clearResetHold();
-    resetHoldPointerId = e.pointerId;
-    try {
-      dom.btnReset.setPointerCapture(e.pointerId);
-    } catch (_) {}
-    dom.btnReset.classList.add("holding");
-    resetHoldTimer = setTimeout(function () {
-      clearResetHold();
-      reset();
-    }, RESET_HOLD_MS);
-  });
-  dom.btnReset.addEventListener("pointerup", function (e) {
-    clearResetHold(e.pointerId);
-  });
-  dom.btnReset.addEventListener("pointercancel", function (e) {
-    clearResetHold(e.pointerId);
-  });
-  dom.btnReset.addEventListener("lostpointercapture", function (e) {
-    clearResetHold(e.pointerId);
-  });
-  dom.btnReset.addEventListener("contextmenu", function (e) {
-    e.preventDefault();
-  });
+  attachResetHoldBehavior(dom.btnReset);
+  attachResetHoldBehavior(dom.btnResetIcon);
   dom.timerDisplayBtn.addEventListener("click", function () {
     haptic();
     onTimerDisplayClick();

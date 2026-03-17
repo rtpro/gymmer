@@ -124,6 +124,7 @@
           <div class="phase-badge" id="phase-badge" aria-live="polite">Work</div>
           <div class="timer-muscle-group" id="timer-muscle-group" aria-live="polite" aria-label="Muscle group: Custom" title="Muscle group: Custom">
             <span class="timer-muscle-group__icon" aria-hidden="true"></span>
+            <span class="timer-muscle-group__label" id="timer-muscle-group-label">Custom</span>
           </div>
 
           <button type="button" class="timer-display-button" id="timer-display-btn" aria-label="Start timer">
@@ -139,6 +140,9 @@
 
         <div class="timer-actions">
           <button type="button" class="btn btn-secondary" id="btn-reset" aria-label="Hold for 1 second to reset and go back">Hold to reset</button>
+          <button type="button" class="btn btn-secondary btn-reset-icon" id="btn-reset-icon" aria-label="Hold for 1 second to reset and go back" title="Reset">
+            <span aria-hidden="true">↺</span>
+          </button>
           <button type="button" class="btn btn-primary" id="btn-start" aria-label="Start timer">Start</button>
         </div>
       </div>
