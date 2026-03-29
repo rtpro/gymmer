@@ -836,8 +836,8 @@ body::before {
 
 .workout-preset-buttons {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.45rem;
 }
 
 /* Work: 2 presets + custom input inline */
@@ -887,25 +887,28 @@ body::before {
 }
 
 .preset-btn-workout {
-  font-size: 0.9rem;
+  min-height: 2.75rem;
+  padding: 0 0.55rem;
+  font-size: 0.78rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
+  justify-content: center;
+  gap: 0.28rem;
 }
 
 .preset-btn-workout .preset-icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1rem;
+  height: 1rem;
   flex-shrink: 0;
   line-height: 1;
 }
 
 .preset-btn-workout .preset-icon svg {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 0.95rem;
+  height: 0.95rem;
   opacity: 0.92;
 }
 
