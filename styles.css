@@ -1091,21 +1091,8 @@ body::before {
   min-width: 120px;
 }
 
-.timer-actions .btn-reset-icon {
-  flex: 0 0 2.65rem;
-  min-width: 2.65rem;
-  width: 2.65rem;
-  padding: 0;
-  font-size: 1.15rem;
-  line-height: 1;
-  border-width: 1px;
-}
-
 .timer-actions.done #btn-reset {
   order: 2;
-}
-.timer-actions.done #btn-reset-icon {
-  display: none;
 }
 .timer-actions.done #btn-start {
   order: 1;
@@ -1178,8 +1165,7 @@ body::before {
   animation: reset-hold-fill-bg 1200ms linear forwards;
 }
 
-#btn-reset,
-#btn-reset-icon {
+#btn-reset {
   touch-action: none;
 }
 

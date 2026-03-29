@@ -171,7 +171,6 @@
     btnStartWorkout: document.getElementById("btn-start-workout"),
     btnStart: document.getElementById("btn-start"),
     btnReset: document.getElementById("btn-reset"),
-    btnResetIcon: document.getElementById("btn-reset-icon"),
     timerActions: document.querySelector(".timer-actions"),
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
@@ -1384,12 +1383,10 @@
     if (doneMode) {
       dom.btnReset.textContent = "Done";
       dom.btnReset.setAttribute("aria-label", "Go back to settings");
-      if (dom.btnResetIcon) dom.btnResetIcon.setAttribute("aria-label", "Go back to settings");
       return;
     }
     dom.btnReset.textContent = "Hold to reset";
     dom.btnReset.setAttribute("aria-label", "Hold for 1 second to reset and go back");
-    if (dom.btnResetIcon) dom.btnResetIcon.setAttribute("aria-label", "Hold for 1 second to reset and go back");
   }
 
   function completeWorkoutNow() {
@@ -1700,7 +1697,6 @@
     }
   });
   attachResetHoldBehavior(dom.btnReset);
-  attachResetHoldBehavior(dom.btnResetIcon);
   dom.timerDisplayBtn.addEventListener("click", function () {
     haptic();
     onTimerDisplayClick();
