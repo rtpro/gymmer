@@ -18,9 +18,13 @@
       label: "Chest",
       icon: `<svg viewBox="0 0 24 24" fill="none"><circle class="muscle-base" cx="12" cy="4.6" r="2.1"/><rect class="muscle-base" x="8.6" y="7" width="6.8" height="8.6" rx="3.2"/><rect class="muscle-base" x="6" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="15.8" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="9.1" y="15" width="2.2" height="5.4" rx="1.1"/><rect class="muscle-base" x="12.7" y="15" width="2.2" height="5.4" rx="1.1"/><path class="muscle-focus" d="M8.8 9.2c.6-1.3 1.8-2 3.2-2s2.6.7 3.2 2l.8 1.8c.2.5 0 1.1-.4 1.5l-.9.9c-.4.4-.9.5-1.4.5h-2.6c-.5 0-1-.1-1.4-.5l-.9-.9c-.4-.4-.6-1-.4-1.5z"/></svg>`,
     },
-    arms: {
-      label: "Arms",
+    biceps: {
+      label: "Biceps",
       icon: `<svg viewBox="0 0 24 24" fill="none"><circle class="muscle-base" cx="12" cy="4.6" r="2.1"/><rect class="muscle-base" x="8.6" y="7" width="6.8" height="8.6" rx="3.2"/><rect class="muscle-base" x="6" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="15.8" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="9.1" y="15" width="2.2" height="5.4" rx="1.1"/><rect class="muscle-base" x="12.7" y="15" width="2.2" height="5.4" rx="1.1"/><rect class="muscle-focus" x="5.8" y="8.3" width="2.6" height="6" rx="1.2"/><rect class="muscle-focus" x="15.6" y="8.3" width="2.6" height="6" rx="1.2"/></svg>`,
+    },
+    triceps: {
+      label: "Triceps",
+      icon: `<svg viewBox="0 0 24 24" fill="none"><circle class="muscle-base" cx="12" cy="4.6" r="2.1"/><rect class="muscle-base" x="8.6" y="7" width="6.8" height="8.6" rx="3.2"/><rect class="muscle-base" x="6" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="15.8" y="8" width="2.2" height="6.3" rx="1.1"/><rect class="muscle-base" x="9.1" y="15" width="2.2" height="5.4" rx="1.1"/><rect class="muscle-base" x="12.7" y="15" width="2.2" height="5.4" rx="1.1"/><path class="muscle-focus" d="M6 8.4c0-.6.5-1.1 1.1-1.1h1.2c.6 0 1.1.5 1.1 1.1v5.1c0 .6-.5 1.1-1.1 1.1H7.1c-.6 0-1.1-.5-1.1-1.1zm8.5 0c0-.6.5-1.1 1.1-1.1h1.2c.6 0 1.1.5 1.1 1.1v5.1c0 .6-.5 1.1-1.1 1.1h-1.2c-.6 0-1.1-.5-1.1-1.1z"/></svg>`,
     },
     abs: {
       label: "Abs",
@@ -589,7 +593,8 @@
       Back: 2,
       Chest: 3,
       Delts: 4,
-      Arms: 5,
+      Biceps: 5,
+      Triceps: 6,
       Abs: 6,
       Custom: 7,
     };
@@ -649,7 +654,7 @@
       return;
     }
 
-    const BODY_PART_TARGETS = { Chest: 16, Back: 18, Legs: 16, Delts: 16, Arms: 14, Abs: 10 };
+    const BODY_PART_TARGETS = { Chest: 16, Back: 18, Legs: 16, Delts: 16, Biceps: 12, Triceps: 12, Abs: 10 };
 
     const now = new Date();
     const dayMs = 24 * 60 * 60 * 1000;
@@ -1721,6 +1726,12 @@
   dom.workoutPresetBtns.forEach((btn) => {
     btn.addEventListener("click", function () {
       haptic();
+      if (btn.dataset.preset === "custom") {
+        state.selectedWorkoutPreset = null;
+        syncPresetActiveStates();
+        saveSessionState();
+        return;
+      }
       if (btn.dataset.preset === state.selectedWorkoutPreset) {
         state.selectedWorkoutPreset = null;
         syncPresetActiveStates();
@@ -1775,7 +1786,7 @@
     if (editBtn) {
       const entryIndex = parseInt(editBtn.dataset.entryIndex, 10);
       if (isNaN(entryIndex)) return;
-      const options = ["Chest", "Back", "Legs", "Delts", "Arms", "Abs", "Custom"];
+      const options = ["Chest", "Back", "Legs", "Delts", "Biceps", "Triceps", "Abs", "Custom"];
       const currentEntry = getCompletions()[entryIndex];
       const current = currentEntry ? getEntryBodyPart(currentEntry) : "Custom";
       const input = window.prompt("Change muscle group (" + options.join(", ") + ")", current);

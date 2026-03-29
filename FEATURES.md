@@ -15,7 +15,8 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 
 ## Config features
 
-- Workout preset buttons: `chest`, `arms`, `abs`, `back`, `legs`, `delts`.
+- Workout preset buttons: `chest`, `biceps`, `triceps`, `abs`, `back`, `legs`, `delts`, `custom`.
+- The `custom` workout preset button clears the selected preset while keeping the current set/work/rest values.
 - Sets buttons: `1`, `2`, `3`, `4`, `5`.
 - Work presets: `30s`, `45s` plus custom input (`ss` or `m:ss`).
 - Rest presets: `1m`, `1:30`, `2m`, `2:30`, `3m` plus custom input (`ss` or `m:ss`).
