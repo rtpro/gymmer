@@ -9,7 +9,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Run timer through phases: prep, work, rest.
 - Pause/resume timer from timer controls or tapping timer circle.
 - The phase badge and muscle-group indicator are shown together as a single integrated header row above the timer.
-- Hold to reset lives on the same controls row as pause/resume; holding it for ~1.2s ends the active session and returns to settings (small finger drift on touch screens should not cancel the hold).
+- Hold to reset lives on the same controls row as pause/resume in a balanced two-button layout; holding it for ~1.2s ends the active session and returns to settings (small finger drift on touch screens should not cancel the hold).
 - Complete all sets and see `Done!` state with `Again` action.
 - Open workout history view, review entries, clear history, and go back.
 
