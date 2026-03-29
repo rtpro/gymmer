@@ -25,6 +25,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 
 - Timer starts with a prep phase of 3 seconds.
 - Phase progression: `prep -> work -> rest -> work ...` until sets complete.
+- A new exercise always starts with all set dots unfilled.
 - A work phase completion fills one set dot.
 - Sets decrement after finishing a rest phase and transitioning back to work.
 - Last set completion stores a full completion entry and shows done UI.

@@ -1448,6 +1448,11 @@
     state.workPhasesCompleted = 0;
     state.restPhasesCompleted = 0;
     state.setsRemaining = state.totalSets;
+    state.phase = "work";
+    state.remainingSeconds = state.workSeconds;
+    dom.timerDisplay.classList.remove("done", "paused");
+    dom.timerValue.classList.remove("done-text");
+    updateSetDisplay();
     goToTimer();
     state.running = true;
     requestWakeLock();
