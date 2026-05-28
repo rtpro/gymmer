@@ -488,17 +488,19 @@
 
   function renderTimerMuscleGroup() {
     if (!dom.timerMuscleGroup) return;
-    const meta = getBodyPartMeta(getResolvedWorkoutPreset());
+    const presetId = getResolvedWorkoutPreset();
+    const meta = getBodyPartMeta(presetId);
     const iconEl = dom.timerMuscleGroup.querySelector(".timer-workout-line__icon");
     const currentSet = Math.min(state.totalSets, Math.max(1, getCurrentSetIndex()));
+    const workoutName = meta.label === "Custom" && state.selectedWorkoutPreset ? getBodyPartMeta(state.selectedWorkoutPreset).label : meta.label;
     const workoutLineText = state.setsRemaining <= 0
-      ? meta.label + " • Completed • " + state.totalSets + " sets"
-      : meta.label + " • Set " + currentSet + "/" + state.totalSets + " • " + formatDuration(state.workSeconds) + " / " + formatDuration(state.restSeconds);
+      ? workoutName + " • Completed • " + state.totalSets + " sets"
+      : workoutName + " • Set " + currentSet + "/" + state.totalSets + " • " + formatDuration(state.workSeconds) + " / " + formatDuration(state.restSeconds);
     if (iconEl) iconEl.innerHTML = meta.icon;
     if (dom.timerWorkoutMeta) dom.timerWorkoutMeta.textContent = workoutLineText;
     dom.timerMuscleGroup.setAttribute("aria-label", workoutLineText);
     dom.timerMuscleGroup.setAttribute("title", workoutLineText);
-    dom.timerMuscleGroup.setAttribute("data-muscle", meta.label.toLowerCase());
+    dom.timerMuscleGroup.setAttribute("data-muscle", workoutName.toLowerCase());
   }
 
   let muscleFlashTimeout = null;

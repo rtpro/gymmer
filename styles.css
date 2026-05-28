@@ -454,8 +454,8 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  margin-bottom: 0.06rem;
+  gap: 0.24rem;
+  margin-bottom: 0.04rem;
 }
 
 .set-dots {
@@ -581,10 +581,10 @@ body::before {
 
 .timer-workout-line__text {
   min-width: 0;
-  font-size: 0.88rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--mg-accent) 58%, #d9e3f5);
+  font-size: 0.84rem;
+  font-weight: 650;
+  letter-spacing: 0.005em;
+  color: color-mix(in srgb, var(--mg-accent) 52%, #d9e3f5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1256,7 +1256,7 @@ body::before {
 
   .timer-info-row {
     width: 100%;
-    gap: 0.28rem;
+    gap: 0.22rem;
   }
 
   .phase-badge {
@@ -1276,13 +1276,13 @@ body::before {
   }
 
   .timer-workout-line__text {
-    font-size: 0.78rem;
+    font-size: 0.75rem;
   }
 }
 
 @media (max-width: 360px) {
   .timer-info-row {
-    gap: 0.24rem;
+    gap: 0.2rem;
   }
 
   .phase-badge {
@@ -1292,7 +1292,7 @@ body::before {
   }
 
   .timer-workout-line__text {
-    font-size: 0.7rem;
+    font-size: 0.68rem;
   }
 }
 
@@ -1307,7 +1307,7 @@ body::before {
   }
 
   .timer-workout-line__text {
-    font-size: 0.92rem;
+    font-size: 0.88rem;
   }
 }
 
