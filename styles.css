@@ -667,10 +667,22 @@ body::before {
 
 .timer-muscle-group__main {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: flex-start;
   gap: 0.5rem;
   width: 100%;
+}
+
+.timer-muscle-group__meta {
+  width: 100%;
+  margin-top: 0.16rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--mg-accent) 34%, #cfd7e6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .timer-muscle-group__icon {
@@ -1392,6 +1404,10 @@ body::before {
   .timer-muscle-group__label {
     font-size: 0.92rem;
   }
+
+  .timer-muscle-group__meta {
+    font-size: 0.68rem;
+  }
 }
 
 @media (max-width: 360px) {
@@ -1402,6 +1418,10 @@ body::before {
 
   .timer-muscle-group__label {
     font-size: 0.84rem;
+  }
+
+  .timer-muscle-group__meta {
+    font-size: 0.64rem;
   }
 }
 
@@ -1421,6 +1441,10 @@ body::before {
 
   .timer-muscle-group__label {
     font-size: 1.16rem;
+  }
+
+  .timer-muscle-group__meta {
+    font-size: 0.8rem;
   }
 }
 
