@@ -182,7 +182,6 @@
     presetStatus: document.getElementById("preset-status"),
     timerMuscleGroup: document.getElementById("timer-muscle-group"),
     timerMuscleGroupLabel: document.getElementById("timer-muscle-group-label"),
-    timerWorkoutSummary: document.getElementById("timer-workout-summary"),
     timerWorkoutMeta: document.getElementById("timer-workout-meta"),
     customWork: document.getElementById("custom-work"),
     customRest: document.getElementById("custom-rest"),
@@ -493,12 +492,13 @@
     const meta = getBodyPartMeta(getResolvedWorkoutPreset());
     const iconEl = dom.timerMuscleGroup.querySelector(".timer-muscle-group__icon");
     const currentSet = Math.min(state.totalSets, Math.max(1, getCurrentSetIndex()));
-    const workoutMetaText = "Set " + currentSet + " of " + state.totalSets + " • " + formatDuration(state.workSeconds) + " / " + formatDuration(state.restSeconds);
+    const workoutMetaText = state.setsRemaining <= 0
+      ? "Completed • " + state.totalSets + " sets"
+      : "Set " + currentSet + "/" + state.totalSets + " • " + formatDuration(state.workSeconds) + " / " + formatDuration(state.restSeconds);
     if (iconEl) iconEl.innerHTML = meta.icon;
     if (dom.timerMuscleGroupLabel) dom.timerMuscleGroupLabel.textContent = meta.label;
-    if (dom.timerWorkoutSummary) dom.timerWorkoutSummary.textContent = state.setsRemaining <= 0 ? "Workout complete" : "Current workout";
-    if (dom.timerWorkoutMeta) dom.timerWorkoutMeta.textContent = state.setsRemaining <= 0 ? "Completed • " + state.totalSets + " sets" : workoutMetaText;
-    dom.timerMuscleGroup.setAttribute("aria-label", "Muscle group: " + meta.label + ". " + workoutMetaText);
+    if (dom.timerWorkoutMeta) dom.timerWorkoutMeta.textContent = workoutMetaText;
+    dom.timerMuscleGroup.setAttribute("aria-label", meta.label + ". " + workoutMetaText);
     dom.timerMuscleGroup.setAttribute("title", meta.label + " • " + workoutMetaText);
     dom.timerMuscleGroup.setAttribute("data-muscle", meta.label.toLowerCase());
   }

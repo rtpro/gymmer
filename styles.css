@@ -448,30 +448,13 @@ body::before {
   gap: 0.82rem;
 }
 
-.timer-phase-stack {
-  --phase-stack-accent: rgba(139, 149, 168, 0.34);
+.timer-info-row {
   width: min(100%, 25rem);
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0.6rem;
-  margin-bottom: 0.2rem;
-}
-
-.timer-phase-stack:has(.phase-badge.work) {
-  --phase-stack-accent: rgba(232, 76, 76, 0.42);
-}
-
-.timer-phase-stack:has(.phase-badge.rest) {
-  --phase-stack-accent: rgba(143, 187, 255, 0.48);
-}
-
-.timer-phase-stack:has(.phase-badge.prep) {
-  --phase-stack-accent: rgba(232, 168, 62, 0.44);
-}
-
-.timer-phase-stack:has(.phase-badge.paused) {
-  --phase-stack-accent: rgba(139, 149, 168, 0.34);
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  margin-bottom: 0.1rem;
 }
 
 .set-dots {
@@ -526,14 +509,14 @@ body::before {
 }
 
 .phase-badge {
-  width: fit-content;
-  min-width: 7.1rem;
+  flex: 0 0 auto;
+  min-width: 5.6rem;
   max-width: 100%;
-  font-size: 0.92rem;
+  font-size: 0.8rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  padding: 0.72rem 1rem;
+  letter-spacing: 0.12em;
+  padding: 0.55rem 0.85rem;
   border-radius: 999px;
   min-height: 0;
   display: inline-flex;
@@ -584,72 +567,26 @@ body::before {
 }
 
 .timer-muscle-group {
-  --mg-accent: rgba(139, 149, 168, 0.65);
-  width: 100%;
+  --mg-accent: rgba(139, 149, 168, 0.72);
   min-width: 0;
-  min-height: 0;
-  padding: 0.78rem 1rem 0.86rem;
-  border-radius: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  position: relative;
-  isolation: isolate;
-  background:
-    radial-gradient(140% 180% at 0% 0%, color-mix(in srgb, var(--mg-accent) 14%, transparent) 0%, transparent 50%),
-    linear-gradient(180deg, rgba(22, 28, 42, 0.98) 0%, rgba(13, 17, 28, 1) 100%);
-  border: 1px solid color-mix(in srgb, var(--mg-accent) 22%, rgba(139, 149, 168, 0.16));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 10px 24px rgba(0, 0, 0, 0.2),
-    0 0 0 1px color-mix(in srgb, var(--mg-accent) 8%, transparent);
-  transition: color 0.25s ease, transform 0.2s ease, background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-}
-
-.timer-muscle-group__glow {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(120% 120% at 0% 50%, color-mix(in srgb, var(--mg-accent) 12%, transparent) 0%, transparent 56%);
-  opacity: 0.9;
-  pointer-events: none;
-  z-index: -1;
-}
-
-.timer-muscle-group__header {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-
-.timer-muscle-group__eyebrow {
-  display: block;
-  font-size: 0.56rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--mg-accent) 34%, #d4dded);
-  opacity: 0.68;
-}
-
-.timer-muscle-group__main {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  width: 100%;
-  margin-top: 0.14rem;
+  gap: 0.4rem;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--mg-accent) 58%, #dbe4f5);
 }
 
 .timer-muscle-group__meta {
-  width: 100%;
-  margin-top: 0.34rem;
-  font-size: 0.8rem;
-  font-weight: 700;
+  min-width: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
   letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--mg-accent) 52%, #dbe4f5);
+  color: color-mix(in srgb, var(--mg-accent) 46%, #cfdaee);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -668,15 +605,14 @@ body::before {
 }
 
 .timer-muscle-group__label {
-  font-size: 1.04rem;
+  font-size: 0.9rem;
   font-weight: 800;
   line-height: 1;
-  letter-spacing: 0.035em;
-  color: color-mix(in srgb, var(--mg-accent) 70%, #f3f7ff);
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--mg-accent) 72%, #f3f7ff);
   text-transform: uppercase;
   white-space: nowrap;
   text-align: left;
-  text-shadow: 0 0 14px color-mix(in srgb, var(--mg-accent) 12%, transparent);
 }
 
 .timer-muscle-group__icon svg {
@@ -684,8 +620,14 @@ body::before {
   height: 100%;
 }
 
+.timer-muscle-group__separator {
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  color: color-mix(in srgb, var(--mg-accent) 34%, #b8c4da);
+}
+
 .timer-muscle-group.is-flash {
-  transform: translateY(-1px) scale(1.035);
+  transform: translateY(-1px);
 }
 
 .timer-muscle-group.is-work {
@@ -1332,53 +1274,25 @@ body::before {
     min-height: 2.95rem;
   }
 
-  .timer-phase-row {
-    gap: 0.16rem;
+  .timer-info-row {
     width: 100%;
-    padding: 0.24rem;
+    gap: 0.45rem;
   }
 
   .phase-badge {
-    flex-basis: 6rem;
-    min-height: 3.34rem;
-    padding-inline: 0.68rem;
-    font-size: 0.86rem;
-    letter-spacing: 0.12em;
+    min-width: 5rem;
+    padding-inline: 0.75rem;
+    font-size: 0.74rem;
+    letter-spacing: 0.1em;
   }
 
   .timer-muscle-group {
-    min-height: 3.34rem;
-    padding: 0.34rem 0.76rem 0.4rem 0.8rem;
-  }
-
-  .timer-muscle-group__eyebrow {
-    font-size: 0.52rem;
-    letter-spacing: 0.18em;
-  }
-
-  .timer-muscle-group__main {
-    gap: 0.42rem;
+    gap: 0.3rem;
   }
 
   .timer-muscle-group__icon {
-    width: 0.96rem;
-    height: 0.96rem;
-  }
-
-  .timer-muscle-group__label {
-    font-size: 0.92rem;
-  }
-
-  .timer-muscle-group__meta {
-    font-size: 0.68rem;
-  }
-}
-
-@media (max-width: 360px) {
-  .phase-badge {
-    min-width: 6.2rem;
-    font-size: 0.76rem;
-    padding-inline: 0.85rem;
+    width: 0.92rem;
+    height: 0.92rem;
   }
 
   .timer-muscle-group__label {
@@ -1386,30 +1300,46 @@ body::before {
   }
 
   .timer-muscle-group__meta {
-    font-size: 0.64rem;
+    font-size: 0.72rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .timer-info-row {
+    gap: 0.38rem;
+  }
+
+  .phase-badge {
+    min-width: 4.7rem;
+    font-size: 0.7rem;
+    padding-inline: 0.68rem;
+  }
+
+  .timer-muscle-group__label {
+    font-size: 0.78rem;
+  }
+
+  .timer-muscle-group__meta {
+    font-size: 0.66rem;
   }
 }
 
 @media (min-width: 700px) {
-  .timer-phase-stack {
+  .timer-info-row {
     width: min(100%, 31rem);
   }
 
   .phase-badge {
-    font-size: 1.02rem;
-    padding: 0.82rem 1.18rem;
-  }
-
-  .timer-muscle-group {
-    padding: 0.9rem 1.15rem 0.98rem;
+    font-size: 0.88rem;
+    padding: 0.6rem 0.95rem;
   }
 
   .timer-muscle-group__label {
-    font-size: 1.16rem;
+    font-size: 0.98rem;
   }
 
   .timer-muscle-group__meta {
-    font-size: 0.8rem;
+    font-size: 0.84rem;
   }
 }
 
