@@ -649,7 +649,7 @@ body::before {
 }
 
 .timer-display {
-  width: min(292px, 84vw);
+  width: min(300px, 85vw);
   aspect-ratio: 1;
   border-radius: 50%;
   display: flex;
@@ -671,15 +671,15 @@ body::before {
 
 .timer-ring-track {
   fill: none;
-  stroke: rgba(56, 66, 92, 0.78);
-  stroke-width: 5;
-  opacity: 0.46;
+  stroke: var(--surface);
+  stroke-width: 6;
+  opacity: 0.5;
 }
 
 .timer-ring-fill {
   fill: none;
   stroke: currentColor;
-  stroke-width: 5;
+  stroke-width: 6;
   stroke-linecap: round;
   stroke-dasharray: 283;
   stroke-dashoffset: calc(283 * (1 - var(--progress, 1)));
@@ -687,21 +687,21 @@ body::before {
 }
 
 .timer-display.work {
-  background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 32%), linear-gradient(165deg, rgba(232, 76, 76, 0.12) 0%, rgba(232, 76, 76, 0.04) 54%, rgba(14, 18, 28, 0.96) 100%);
-  box-shadow: 0 0 0 1px rgba(232, 76, 76, 0.42), 0 0 0 8px rgba(232, 76, 76, 0.04), inset 0 2px 20px rgba(0, 0, 0, 0.16);
-  color: #90b8ff;
+  background: linear-gradient(165deg, var(--work-dim) 0%, rgba(232, 76, 76, 0.06) 50%);
+  box-shadow: 0 0 0 2px var(--work-ring), inset 0 2px 16px rgba(0, 0, 0, 0.15);
+  color: var(--work);
 }
 
 .timer-display.rest {
-  background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0) 34%), linear-gradient(165deg, rgba(143, 187, 255, 0.16) 0%, rgba(120, 172, 255, 0.05) 56%, rgba(14, 18, 28, 0.96) 100%);
-  box-shadow: 0 0 0 1px rgba(143, 187, 255, 0.5), 0 0 0 8px rgba(143, 187, 255, 0.05), inset 0 2px 20px rgba(0, 0, 0, 0.16);
-  color: #9bc2ff;
+  background: linear-gradient(165deg, var(--rest-dim) 0%, rgba(120, 172, 255, 0.08) 50%);
+  box-shadow: 0 0 0 2px var(--rest-ring), inset 0 2px 16px rgba(0, 0, 0, 0.15);
+  color: var(--rest);
 }
 
 .timer-display.prep {
-  background: radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0) 32%), linear-gradient(165deg, rgba(232, 168, 62, 0.14) 0%, rgba(232, 168, 62, 0.04) 54%, rgba(14, 18, 28, 0.96) 100%);
-  box-shadow: 0 0 0 1px rgba(232, 168, 62, 0.46), 0 0 0 8px rgba(232, 168, 62, 0.04), inset 0 2px 20px rgba(0, 0, 0, 0.16);
-  color: #ffcc6f;
+  background: linear-gradient(165deg, var(--prep-dim) 0%, rgba(232, 168, 62, 0.06) 50%);
+  box-shadow: 0 0 0 2px var(--prep-ring), inset 0 2px 16px rgba(0, 0, 0, 0.15);
+  color: var(--prep);
 }
 
 .timer-display.done {
@@ -1313,9 +1313,6 @@ body::before {
     font-size: 0.75rem;
   }
 
-  .timer-display {
-    width: min(280px, 82vw);
-  }
 }
 
 @media (max-width: 360px) {
@@ -1333,10 +1330,6 @@ body::before {
   .timer-workout-line__text {
     font-size: 0.68rem;
   }
-
-  .timer-display {
-    width: min(266px, 80vw);
-  }
 }
 
 @media (min-width: 700px) {
@@ -1352,10 +1345,6 @@ body::before {
 
   .timer-workout-line__text {
     font-size: 0.88rem;
-  }
-
-  .timer-display {
-    width: min(308px, 64vw);
   }
 }
 
