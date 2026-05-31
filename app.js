@@ -1292,8 +1292,11 @@
     dom.setDots.setAttribute("aria-label", state.setsRemaining <= 0 ? "All sets complete" : "Set " + state.setsRemaining + " of " + total);
     for (let i = 0; i < total; i++) {
       const dot = document.createElement("span");
+      const core = document.createElement("span");
       dot.className = "set-dot" + (i < filled ? " filled" : "");
+      core.className = "set-dot-core";
       dot.setAttribute("aria-hidden", "true");
+      dot.appendChild(core);
       dom.setDots.appendChild(dot);
     }
   }
