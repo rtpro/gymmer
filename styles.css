@@ -434,6 +434,47 @@ body::before {
   margin-top: 0.25rem;
 }
 
+.account-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem;
+  border: 1px solid rgba(139, 149, 168, 0.14);
+  border-radius: 0.75rem;
+  background: rgba(12, 17, 26, 0.5);
+}
+
+.account-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.account-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.account-status {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.btn-google-signin {
+  flex: none;
+  min-height: 2.7rem;
+  padding: 0 1rem;
+  font-size: 0.88rem;
+}
+
 .timer-actions {
   width: 100%;
   max-width: 348px;
@@ -1346,6 +1387,14 @@ body::before {
 
   .timer-display {
     width: min(292px, 86vw);
+  }
+
+  .account-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .btn-google-signin {
+    width: 100%;
   }
 
 }

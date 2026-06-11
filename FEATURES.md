@@ -16,6 +16,8 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 
 ## Config features
 
+- Settings shows an Account panel with current sync identity and optional Google sign-in.
+- Google sign-in links the current anonymous Firebase account when possible so existing synced history remains under the same user; if the Google account already exists, history is merged into that account.
 - Workout preset buttons: `chest`, `biceps`, `triceps`, `abs`, `back`, `legs`, `delts`, `custom`, displayed as a compact 4×2 grid.
 - The `custom` workout preset button clears the selected preset while keeping the current set/work/rest values.
 - Sets buttons: `1`, `2`, `3`, `4`, `5`.
@@ -37,7 +39,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 ## Persistence invariants
 
 - Completions are stored in localStorage key `gymmer_completions`.
-- When Firebase is available, completions sync to Firestore under the current anonymous user's `users/{uid}/state/history` document while keeping localStorage as the offline fallback.
+- When Firebase is available, completions sync to Firestore under the current anonymous or Google-linked user's `users/{uid}/state/history` document while keeping localStorage as the offline fallback.
 - Active session is stored in localStorage key `gymmer_session_v1`.
 - Session restore supports phases `prep`, `work`, `rest`.
 - Up to 50 completion records are kept.

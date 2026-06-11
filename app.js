@@ -194,6 +194,8 @@
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
     btnBackHistoryBottom: document.getElementById("btn-back-history-bottom"),
+    accountStatus: document.getElementById("account-status"),
+    btnGoogleSignin: document.getElementById("btn-google-signin"),
   };
 
   function showView(name) {
@@ -322,6 +324,43 @@
       renderCompletions();
     }).catch(function () {
       suppressCloudSave = false;
+    });
+  }
+
+  function renderAccountState(detail) {
+    const cloud = window.gymmerCloud;
+    const state = detail || (cloud && typeof cloud.getAccountState === "function" ? cloud.getAccountState() : null);
+    if (!dom.accountStatus || !state) return;
+
+    dom.accountStatus.textContent = state.signedIn ? state.label : "Anonymous sync";
+    if (dom.btnGoogleSignin) {
+      dom.btnGoogleSignin.hidden = !!state.signedIn;
+      dom.btnGoogleSignin.disabled = !state.ready;
+    }
+  }
+
+  function signInWithGoogle() {
+    const cloud = window.gymmerCloud;
+    if (!cloud || typeof cloud.signInWithGoogle !== "function") return;
+    if (dom.btnGoogleSignin) {
+      dom.btnGoogleSignin.disabled = true;
+      dom.btnGoogleSignin.textContent = "Signing in...";
+    }
+    cloud.signInWithGoogle(getCompletions()).then(function (result) {
+      if (result && Array.isArray(result.completions)) {
+        suppressCloudSave = true;
+        saveCompletions(result.completions.slice(0, MAX_COMPLETIONS));
+        suppressCloudSave = false;
+        renderCompletions();
+      }
+      renderAccountState(result ? result.account : null);
+    }).catch(function () {
+      window.alert("Google sign-in did not complete. Try again.");
+    }).finally(function () {
+      if (dom.btnGoogleSignin) {
+        dom.btnGoogleSignin.textContent = "Sign in with Google";
+        renderAccountState();
+      }
     });
   }
 
@@ -1655,6 +1694,10 @@
   syncTimerMuscleGroupTone(state.phase, !state.running);
   renderCompletions();
   window.addEventListener("gymmer-cloud-ready", syncCloudCompletions);
+  window.addEventListener("gymmer-cloud-account", function (event) {
+    renderAccountState(event.detail);
+  });
+  renderAccountState();
   syncCloudCompletions();
   if (state.running && state.setsRemaining > 0) {
     updateTimerNotification(true);
@@ -1850,6 +1893,12 @@
     haptic();
     goToHistory();
   });
+  if (dom.btnGoogleSignin) {
+    dom.btnGoogleSignin.addEventListener("click", function () {
+      haptic();
+      signInWithGoogle();
+    });
+  }
   dom.btnBackHistory.addEventListener("click", function () {
     haptic();
     goToSettings();

@@ -1,8 +1,12 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getAuth,
+  GoogleAuthProvider,
+  linkWithPopup,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithCredential,
+  signInWithPopup,
 } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   doc,
@@ -26,6 +30,8 @@ const MAX_COMPLETIONS = 50;
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 enableIndexedDbPersistence(db).catch(function () {});
 
@@ -74,6 +80,33 @@ function userStateRef() {
   return doc(db, "users", currentUser.uid, "state", "history");
 }
 
+function accountState() {
+  const user = currentUser;
+  if (!user) {
+    return { ready: false, signedIn: false, anonymous: true, label: "Sync starting" };
+  }
+
+  const providers = user.providerData || [];
+  const googleProfile = providers.find(function (profile) {
+    return profile.providerId === "google.com";
+  });
+
+  return {
+    ready: true,
+    signedIn: !!googleProfile,
+    anonymous: user.isAnonymous,
+    uid: user.uid,
+    email: googleProfile ? googleProfile.email : null,
+    label: googleProfile && googleProfile.email ? googleProfile.email : "Anonymous sync",
+  };
+}
+
+function emitAccountChange() {
+  window.dispatchEvent(new CustomEvent("gymmer-cloud-account", {
+    detail: accountState(),
+  }));
+}
+
 async function saveCompletions(list) {
   await ready;
   const ref = userStateRef();
@@ -101,8 +134,56 @@ async function syncCompletions(localList) {
   return merged;
 }
 
+async function signInWithGoogle(localList) {
+  await ready;
+  const beforeUid = currentUser ? currentUser.uid : null;
+  const beforeList = normalizeCompletions(localList);
+  const beforeRef = userStateRef();
+
+  if (beforeRef && beforeList.length) {
+    await setDoc(beforeRef, {
+      completions: beforeList,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+  }
+
+  let credential;
+  try {
+    credential = currentUser && currentUser.isAnonymous
+      ? await linkWithPopup(currentUser, googleProvider)
+      : await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    if (error && error.code !== "auth/credential-already-in-use" && error.code !== "auth/email-already-in-use") {
+      throw error;
+    }
+    const pendingCredential = GoogleAuthProvider.credentialFromError(error);
+    credential = pendingCredential
+      ? await signInWithCredential(auth, pendingCredential)
+      : await signInWithPopup(auth, googleProvider);
+  }
+
+  currentUser = credential.user;
+  const merged = await syncCompletions(beforeList);
+
+  if (beforeUid && currentUser.uid !== beforeUid && beforeList.length) {
+    await setDoc(userStateRef(), {
+      completions: merged,
+      migratedFromAnonymousUid: beforeUid,
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+  }
+
+  emitAccountChange();
+  return {
+    account: accountState(),
+    completions: merged,
+  };
+}
+
 window.gymmerCloud = {
+  getAccountState: accountState,
   saveCompletions,
+  signInWithGoogle,
   syncCompletions,
 };
 
@@ -110,6 +191,7 @@ onAuthStateChanged(auth, function (user) {
   currentUser = user;
   if (user) {
     resolveReady();
+    emitAccountChange();
     window.dispatchEvent(new CustomEvent("gymmer-cloud-ready"));
   }
 });
