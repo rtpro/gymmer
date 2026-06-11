@@ -37,6 +37,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 ## Persistence invariants
 
 - Completions are stored in localStorage key `gymmer_completions`.
+- When Firebase is available, completions sync to Firestore under the current anonymous user's `users/{uid}/state/history` document while keeping localStorage as the offline fallback.
 - Active session is stored in localStorage key `gymmer_session_v1`.
 - Session restore supports phases `prep`, `work`, `rest`.
 - Up to 50 completion records are kept.
@@ -44,7 +45,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 ## PWA and lifecycle invariants
 
 - Service worker file `sw.js` is registered from `app.js`.
-- Cache asset list includes app shell files: `index.html`, `styles.css`, `app.js`, `manifest.json`, `icon.svg`.
+- Cache asset list includes app shell files: `index.html`, `styles.css`, `app.js`, `firebase-app.js`, `manifest.json`, `icon.svg`.
 - Visibility/page-show events resync timer from timestamps when app returns to foreground.
 - Wake Lock is requested when running (if available) and released on pause/stop/reset.
 

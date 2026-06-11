@@ -12,6 +12,7 @@
   const MAX_COMPLETIONS = 50;
   const SESSION_GROUP_WINDOW_MS = 90 * 60 * 1000;
   const HISTORY_DEDUPE_MIGRATION_KEY = "gymmer_history_dedupe_v1_done";
+  let suppressCloudSave = false;
 
   const BODY_PART_META = {
     chest: {
@@ -301,6 +302,27 @@
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
     } catch (_) {}
+    if (!suppressCloudSave) queueCloudCompletionsSave(list);
+  }
+
+  function queueCloudCompletionsSave(list) {
+    const cloud = window.gymmerCloud;
+    if (!cloud || typeof cloud.saveCompletions !== "function") return;
+    cloud.saveCompletions(list).catch(function () {});
+  }
+
+  function syncCloudCompletions() {
+    const cloud = window.gymmerCloud;
+    if (!cloud || typeof cloud.syncCompletions !== "function") return;
+    cloud.syncCompletions(getCompletions()).then(function (list) {
+      if (!Array.isArray(list)) return;
+      suppressCloudSave = true;
+      saveCompletions(list.slice(0, MAX_COMPLETIONS));
+      suppressCloudSave = false;
+      renderCompletions();
+    }).catch(function () {
+      suppressCloudSave = false;
+    });
   }
 
   function getBodyPartMeta(presetId) {
@@ -1632,6 +1654,8 @@
   syncCustomInputs();
   syncTimerMuscleGroupTone(state.phase, !state.running);
   renderCompletions();
+  window.addEventListener("gymmer-cloud-ready", syncCloudCompletions);
+  syncCloudCompletions();
   if (state.running && state.setsRemaining > 0) {
     updateTimerNotification(true);
   } else {
