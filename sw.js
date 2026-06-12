@@ -1,4 +1,4 @@
-const CACHE_NAME = "gymmer-v87";
+const CACHE_NAME = "gymmer-v88";
 const ASSETS = ["index.html", "styles.css", "app.js", "firebase-app.js", "manifest.json", "icon.svg"];
 
 self.addEventListener("install", function (e) {

@@ -36,10 +36,18 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 enableIndexedDbPersistence(db).catch(function () {});
 
 let currentUser = auth.currentUser;
+let anonymousSignInStarted = false;
+let readyResolved = false;
 let resolveReady;
 const ready = new Promise(function (resolve) {
   resolveReady = resolve;
 });
+
+function markReady() {
+  if (readyResolved) return;
+  readyResolved = true;
+  resolveReady();
+}
 
 function completionKey(entry) {
   if (!entry || typeof entry !== "object") return "";
@@ -190,12 +198,17 @@ window.gymmerCloud = {
 onAuthStateChanged(auth, function (user) {
   currentUser = user;
   if (user) {
-    resolveReady();
+    markReady();
     emitAccountChange();
     window.dispatchEvent(new CustomEvent("gymmer-cloud-ready"));
+    return;
   }
-});
 
-signInAnonymously(auth).catch(function () {
-  resolveReady();
+  emitAccountChange();
+  if (anonymousSignInStarted) return;
+  anonymousSignInStarted = true;
+  signInAnonymously(auth).catch(function () {
+    markReady();
+    emitAccountChange();
+  });
 });
