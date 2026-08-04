@@ -33,6 +33,10 @@ npx serve .
 2. Menu (⋮) → **Add to Home screen** or **Install app**.
 3. Use the icon like a normal app; it runs in a browser window without the address bar.
 
+## Google Health / Health Connect export
+
+Workout history exposes captured workouts as Health Connect-ready `ExerciseSessionRecord` JSON from the Session history screen. In a browser, use **Copy JSON** or **Download**. If Gymmer is hosted inside an Android shell that provides `GymmerHealthConnect.writeWorkouts(payload)` or `AndroidHealthConnect.writeWorkouts(json)`, the **Sync** button sends the same records to that native Health Connect bridge.
+
 ## Feature safety workflow
 
 To reduce regressions when changing code:

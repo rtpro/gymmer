@@ -13,6 +13,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Hold to reset lives on the same controls row as pause/resume in a balanced two-button layout; holding it for ~1.2s ends the active session and returns to settings (small finger drift on touch screens should not cancel the hold).
 - Complete all sets and see `Done!` state with `Again` action.
 - Open workout history view, review entries, clear history, and go back.
+- From workout history, expose captured workouts as Google Health / Health Connect-ready exercise-session records through native bridge sync when available, with copy/download JSON fallback in the web app.
 
 ## Config features
 
@@ -43,6 +44,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Active session is stored in localStorage key `gymmer_session_v1`.
 - Session restore supports phases `prep`, `work`, `rest`.
 - Up to 50 completion records are kept.
+- Google Health export status is stored in localStorage key `gymmer_health_connect_exported_v1`; workout history remains the source of truth for records to expose.
 
 ## PWA and lifecycle invariants
 
@@ -62,6 +64,7 @@ Run this checklist for any change that touches related code:
 5. Complete one full set cycle and verify set-dot progression.
 6. Complete full workout and verify `Done!`, `Again`, and done-state buttons.
 7. Open Workout history; verify new entry appears and clear history works.
+7a. In Workout history, verify Google Health copy/download buttons are disabled with no history and produce Health Connect JSON when history exists.
 8. Reload page during an active session; verify session restores correctly.
 9. Reload after completion/reset; verify no stale running session remains.
 10. Confirm service worker still registers and app shell still loads offline after one successful load.
