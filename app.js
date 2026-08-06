@@ -9,10 +9,12 @@
   const PREP_SECONDS = 3;
   const STORAGE_KEY = "gymmer_completions";
   const SESSION_KEY = "gymmer_session_v1";
+  const PREFS_KEY = "gymmer_prefs_v1";
   const MAX_COMPLETIONS = 50;
   const SESSION_GROUP_WINDOW_MS = 90 * 60 * 1000;
   const HISTORY_DEDUPE_MIGRATION_KEY = "gymmer_history_dedupe_v1_done";
   let suppressCloudSave = false;
+  let halfwayCueFired = false;
 
   const BODY_PART_META = {
     chest: {
@@ -59,6 +61,8 @@
     running: false,
     intervalId: null,
     selectedWorkoutPreset: null,
+    soundEnabled: true,
+    hapticsEnabled: true,
     historyFilter: "all",
     historyBodyFilter: "all",
     historyMode: "session",
@@ -177,6 +181,10 @@
     btnStart: document.getElementById("btn-start"),
     btnReset: document.getElementById("btn-reset"),
     timerActions: document.querySelector(".timer-actions"),
+    timerNextUp: document.getElementById("timer-next-up"),
+    btnSkipPhase: document.getElementById("btn-skip-phase"),
+    btnSoundToggle: document.getElementById("btn-sound-toggle"),
+    btnHapticsToggle: document.getElementById("btn-haptics-toggle"),
     presetBtns: document.querySelectorAll(".preset-btn[data-target]"),
     setBtns: document.querySelectorAll(".preset-btn-sets"),
     workoutPresetBtns: document.querySelectorAll(".preset-btn-workout"),
@@ -197,6 +205,99 @@
     accountStatus: document.getElementById("account-status"),
     btnGoogleSignin: document.getElementById("btn-google-signin"),
   };
+
+  function savePrefs() {
+    const prefs = {
+      workSeconds: state.workSeconds,
+      restSeconds: state.restSeconds,
+      totalSets: state.totalSets,
+      selectedWorkoutPreset: state.selectedWorkoutPreset,
+      soundEnabled: state.soundEnabled,
+      hapticsEnabled: state.hapticsEnabled,
+    };
+    try {
+      localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
+    } catch (_) {}
+  }
+
+  function loadPrefs() {
+    let raw = null;
+    try {
+      raw = localStorage.getItem(PREFS_KEY);
+    } catch (_) {
+      return false;
+    }
+    if (!raw) return false;
+    let prefs = null;
+    try {
+      prefs = JSON.parse(raw);
+    } catch (_) {
+      return false;
+    }
+    if (!prefs || typeof prefs !== "object") return false;
+
+    const workSeconds = parseInt(prefs.workSeconds, 10);
+    const restSeconds = parseInt(prefs.restSeconds, 10);
+    const totalSets = parseInt(prefs.totalSets, 10);
+    if (!isNaN(workSeconds) && workSeconds >= 1) state.workSeconds = Math.min(600, workSeconds);
+    if (!isNaN(restSeconds) && restSeconds >= 1) state.restSeconds = Math.min(600, restSeconds);
+    if (!isNaN(totalSets) && totalSets >= 1) {
+      state.totalSets = totalSets;
+      state.setsRemaining = totalSets;
+    }
+    if (prefs.selectedWorkoutPreset == null || prefs.selectedWorkoutPreset === "") {
+      state.selectedWorkoutPreset = null;
+    } else {
+      state.selectedWorkoutPreset = String(prefs.selectedWorkoutPreset);
+    }
+    if (typeof prefs.soundEnabled === "boolean") state.soundEnabled = prefs.soundEnabled;
+    if (typeof prefs.hapticsEnabled === "boolean") state.hapticsEnabled = prefs.hapticsEnabled;
+    state.remainingSeconds = state.workSeconds;
+    return true;
+  }
+
+  function renderCuePrefButtons() {
+    if (dom.btnSoundToggle) {
+      dom.btnSoundToggle.classList.toggle("active", state.soundEnabled);
+      dom.btnSoundToggle.setAttribute("aria-pressed", state.soundEnabled ? "true" : "false");
+      dom.btnSoundToggle.textContent = state.soundEnabled ? "Sound on" : "Sound off";
+      dom.btnSoundToggle.setAttribute("aria-label", state.soundEnabled ? "Sound cues on" : "Sound cues off");
+    }
+    if (dom.btnHapticsToggle) {
+      dom.btnHapticsToggle.classList.toggle("active", state.hapticsEnabled);
+      dom.btnHapticsToggle.setAttribute("aria-pressed", state.hapticsEnabled ? "true" : "false");
+      dom.btnHapticsToggle.textContent = state.hapticsEnabled ? "Haptics on" : "Haptics off";
+      dom.btnHapticsToggle.setAttribute("aria-label", state.hapticsEnabled ? "Haptic cues on" : "Haptic cues off");
+    }
+  }
+
+  function getNextUpLabel() {
+    if (state.setsRemaining <= 0) return "";
+    if (state.phase === "prep") {
+      return "Up next: Work · Set " + getCurrentSetIndex() + "/" + state.totalSets;
+    }
+    if (state.phase === "work") {
+      if (state.setsRemaining === 1) return "Up next: Done";
+      return "Up next: Rest";
+    }
+    if (state.phase === "rest") {
+      if (state.setsRemaining <= 1) return "Up next: Done";
+      return "Up next: Work · Set " + (getCurrentSetIndex() + 1) + "/" + state.totalSets;
+    }
+    return "";
+  }
+
+  function renderNextUp() {
+    if (!dom.timerNextUp) return;
+    const label = getNextUpLabel();
+    if (!label) {
+      dom.timerNextUp.textContent = "";
+      dom.timerNextUp.classList.add("is-hidden");
+      return;
+    }
+    dom.timerNextUp.textContent = label;
+    dom.timerNextUp.classList.remove("is-hidden");
+  }
 
   function showView(name) {
     const isSettings = name === "settings";
@@ -1161,6 +1262,7 @@
 
   function setPhase(phase) {
     state.phase = phase;
+    halfwayCueFired = false;
     if (phase === "prep") {
       state.remainingSeconds = PREP_SECONDS;
       dom.phaseBadge.textContent = "Get ready";
@@ -1185,7 +1287,8 @@
     updateProgressRing();
     updateRestBadgeUrgency();
     applyPrimaryTimerActionLabel();
-        saveSessionState();
+    renderNextUp();
+    saveSessionState();
     updateTimerNotification(true);
   }
 
@@ -1219,6 +1322,18 @@
     }, PHASE_END_DURATION_MS);
   }
 
+  function maybeFireHalfwayCue() {
+    if (halfwayCueFired) return;
+    if (state.phase !== "work" && state.phase !== "rest") return;
+    const total = getPhaseTotalSeconds();
+    if (total < 20) return;
+    const halfwayAt = Math.ceil(total / 2);
+    if (state.remainingSeconds !== halfwayAt) return;
+    halfwayCueFired = true;
+    soundHalfway();
+    hapticHalfway();
+  }
+
   function tick() {
     state.remainingSeconds = Math.max(0, Math.ceil((state.phaseEndTimestamp - Date.now()) / 1000));
     if (state.remainingSeconds <= 0) {
@@ -1227,16 +1342,19 @@
     }
     if (state.phase === "prep") {
       soundPrepTick();
+      hapticCountdown();
       setTimerValue(String(state.remainingSeconds));
     } else {
+      maybeFireHalfwayCue();
       if ((state.phase === "work" || state.phase === "rest") && state.remainingSeconds >= 1 && state.remainingSeconds <= 3) {
         soundCountdownTick();
+        hapticCountdown();
       }
       setTimerValue(formatTime(state.remainingSeconds));
     }
     updateProgressRing();
     updateRestBadgeUrgency();
-        saveSessionState();
+    saveSessionState();
     updateTimerNotification(false);
   }
 
@@ -1254,6 +1372,7 @@
   }
 
   function playTone(freq, duration, volume, startTime) {
+    if (!state.soundEnabled) return;
     const ctx = getAudioContext();
     if (!ctx) return;
     const t = startTime != null ? startTime : ctx.currentTime;
@@ -1323,6 +1442,16 @@
     } catch (_) {}
   }
 
+  function soundHalfway() {
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const t = ctx.currentTime;
+      playTone(494, 0.09, VOL_MAIN * 0.85, t);
+      playTone(494, 0.09, VOL_MAIN * 0.85, t + 0.14);
+    } catch (_) {}
+  }
+
   function soundSetComplete() {
     try {
       const ctx = getAudioContext();
@@ -1334,12 +1463,25 @@
     } catch (_) {}
   }
 
+  function vibratePattern(pattern) {
+    if (!state.hapticsEnabled) return;
+    if (typeof navigator.vibrate === "function") navigator.vibrate(pattern);
+  }
+
   function hapticLight() {
-    if (typeof navigator.vibrate === "function") navigator.vibrate(18);
+    vibratePattern(18);
   }
 
   function hapticStrong() {
-    if (typeof navigator.vibrate === "function") navigator.vibrate([30, 35, 55]);
+    vibratePattern([30, 35, 55]);
+  }
+
+  function hapticCountdown() {
+    vibratePattern(12);
+  }
+
+  function hapticHalfway() {
+    vibratePattern([14, 40, 14]);
   }
 
   function haptic() {
@@ -1365,11 +1507,12 @@
   function updateSetDisplay() {
     renderSetDots();
     renderTimerMuscleGroup();
-        if (state.setsRemaining <= 0) {
+    renderNextUp();
+    if (state.setsRemaining <= 0) {
       dom.timerDisplay.classList.add("done");
       syncTimerMuscleGroupTone(state.phase, true);
       dom.phaseBadge.classList.remove("urgent");
-            setTimerValue("Done!");
+      setTimerValue("Done!");
       dom.timerValue.classList.add("done-text");
       dom.timerDisplay.style.setProperty("--progress", "0");
       dom.btnStart.textContent = "Next exercise";
@@ -1381,7 +1524,50 @@
       dom.btnReset.classList.remove("btn-secondary");
       dom.btnReset.classList.add("btn-primary");
       dom.timerActions.classList.add("done");
+    } else if (dom.timerActions) {
+      dom.timerActions.classList.remove("done");
     }
+  }
+
+  function skipPhase() {
+    if (state.setsRemaining <= 0) return;
+    const wasRunning = state.running;
+
+    if (phaseEndTimeoutId) {
+      clearPhaseEndAnimation();
+      switchPhase();
+    } else {
+      if (state.intervalId) {
+        clearInterval(state.intervalId);
+        state.intervalId = null;
+      }
+      processPhaseEnd(true);
+    }
+
+    if (state.setsRemaining <= 0) {
+      renderNextUp();
+      return;
+    }
+
+    if (wasRunning) {
+      state.running = true;
+      applyPausedUI(false);
+      applyPrimaryTimerActionLabel();
+      if (!state.intervalId) state.intervalId = setInterval(tick, 1000);
+      requestWakeLock();
+      updateTimerNotification(true);
+    } else {
+      state.running = false;
+      if (state.intervalId) {
+        clearInterval(state.intervalId);
+        state.intervalId = null;
+      }
+      applyPausedUI(true);
+      applyPrimaryTimerActionLabel();
+      closeTimerNotification();
+    }
+    renderNextUp();
+    saveSessionState();
   }
 
   function stopTimer() {
@@ -1585,6 +1771,7 @@
     updateSetDisplay();
     showView("settings");
     clearSessionState();
+    savePrefs();
   }
 
   const MIN_SECONDS = 1;
@@ -1606,6 +1793,7 @@
     syncPresetActiveStates();
     syncCustomInputs();
     saveSessionState();
+    savePrefs();
   }
 
   function applySets(total) {
@@ -1617,6 +1805,7 @@
     updateSetDisplay();
     syncPresetActiveStates();
     saveSessionState();
+    savePrefs();
   }
 
   function applyWorkoutPreset(sets, workSeconds, restSeconds, presetId) {
@@ -1633,6 +1822,7 @@
     syncPresetActiveStates();
     syncCustomInputs();
     saveSessionState();
+    savePrefs();
   }
 
   function syncPresetActiveStates() {
@@ -1676,12 +1866,14 @@
 
   // Initial UI
   renderWorkoutPresetIcons();
+  loadPrefs();
   const restoredSession = restoreSessionState();
   if (!restoredSession) {
     setPhase("work");
     updateSetDisplay();
     goToSettings(true);
   } else {
+    // Active session values win over prefs for sets/work/rest/preset.
     updateSetDisplay();
     if (state.setsRemaining > 0) {
       goToTimer();
@@ -1689,9 +1881,11 @@
       goToSettings(true);
     }
   }
+  renderCuePrefButtons();
   syncPresetActiveStates();
   syncCustomInputs();
   syncTimerMuscleGroupTone(state.phase, !state.running);
+  renderNextUp();
   renderCompletions();
   window.addEventListener("gymmer-cloud-ready", syncCloudCompletions);
   window.addEventListener("gymmer-cloud-account", function (event) {
@@ -1784,6 +1978,33 @@
     }
   });
   attachResetHoldBehavior(dom.btnReset);
+  if (dom.btnSkipPhase) {
+    dom.btnSkipPhase.addEventListener("click", function () {
+      hapticLight();
+      skipPhase();
+    });
+  }
+  if (dom.btnSoundToggle) {
+    dom.btnSoundToggle.addEventListener("click", function () {
+      state.soundEnabled = !state.soundEnabled;
+      renderCuePrefButtons();
+      savePrefs();
+      if (state.soundEnabled) {
+        getAudioContext();
+        soundCountdownTick();
+      } else {
+        hapticLight();
+      }
+    });
+  }
+  if (dom.btnHapticsToggle) {
+    dom.btnHapticsToggle.addEventListener("click", function () {
+      state.hapticsEnabled = !state.hapticsEnabled;
+      renderCuePrefButtons();
+      savePrefs();
+      if (state.hapticsEnabled) hapticLight();
+    });
+  }
   dom.timerDisplayBtn.addEventListener("click", function () {
     haptic();
     onTimerDisplayClick();
@@ -1807,12 +2028,14 @@
         state.selectedWorkoutPreset = null;
         syncPresetActiveStates();
         saveSessionState();
+        savePrefs();
         return;
       }
       if (btn.dataset.preset === state.selectedWorkoutPreset) {
         state.selectedWorkoutPreset = null;
         syncPresetActiveStates();
         saveSessionState();
+        savePrefs();
         return;
       }
       applyWorkoutPreset(
