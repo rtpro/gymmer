@@ -10,7 +10,9 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Pause/resume timer from timer controls or tapping timer circle.
 - The phase badge and muscle-group indicator are shown together as a single integrated header row above the timer.
 - The timer screen shows richer current-workout context in that header: current muscle group, current set number, total sets, and work/rest interval lengths.
+- The timer screen shows an "Up next" preview for the upcoming phase (or Done).
 - Hold to reset lives on the same controls row as pause/resume in a balanced two-button layout; holding it for ~1.2s ends the active session and returns to settings (small finger drift on touch screens should not cancel the hold).
+- Skip advances the active session to the next phase as if the current phase completed (hidden in the done state).
 - Complete all sets and see `Done!` state with `Again` action.
 - Open workout history view, review entries, clear history, and go back.
 
@@ -24,6 +26,8 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Work presets: `30s`, `45s` plus custom input (`ss` or `m:ss`).
 - Rest presets: `1m`, `1:30`, `2m`, `2:30`, `3m` plus custom input (`ss` or `m:ss`).
 - Time bounds: minimum 1s, maximum 600s when applying presets.
+- Cue feedback toggles on Settings: sound on/off and haptics on/off (persisted).
+- Last used sets/work/rest/preset and cue toggles persist in localStorage key `gymmer_prefs_v1` for quick next start when no active session exists.
 
 ## Timer behavior invariants
 
@@ -35,12 +39,14 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 - Last set completion stores a full completion entry and shows done UI.
 - Timer display ring uses `--progress` and updates through active phases.
 - End-of-phase animation appears for work/rest transitions unless skipped during timestamp sync.
+- Distinct cue vocabulary: countdown ticks, halfway cue (work/rest phases ≥20s), phase-transition sounds/haptics, and stronger completion pattern. Sound and haptics respect the Settings cue toggles.
 
 ## Persistence invariants
 
 - Completions are stored in localStorage key `gymmer_completions`.
 - When Firebase is available, completions sync to Firestore under the current anonymous or Google-linked user's `users/{uid}/state/history` document while keeping localStorage as the offline fallback.
 - Active session is stored in localStorage key `gymmer_session_v1`.
+- Workout preferences (sets/work/rest/preset + cue toggles) are stored in localStorage key `gymmer_prefs_v1`.
 - Session restore supports phases `prep`, `work`, `rest`.
 - Up to 50 completion records are kept.
 
@@ -65,3 +71,6 @@ Run this checklist for any change that touches related code:
 8. Reload page during an active session; verify session restores correctly.
 9. Reload after completion/reset; verify no stale running session remains.
 10. Confirm service worker still registers and app shell still loads offline after one successful load.
+11. Toggle Sound/Haptics on Settings; verify cues respect the toggles and preference survives reload.
+12. During an active timer, verify "Up next" text updates by phase and Skip advances to the next phase.
+13. Change sets/work/rest, reload with no active session, and verify last config is restored.

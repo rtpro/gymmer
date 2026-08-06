@@ -95,6 +95,14 @@
               <input type="text" id="custom-rest" class="custom-time-input" inputmode="numeric" placeholder="Custom" aria-label="Custom rest duration" />
             </div>
           </div>
+          <div class="cue-prefs" id="cue-prefs">
+            <label class="preset-label">Cue feedback</label>
+            <div class="cue-pref-buttons" role="group" aria-label="Cue feedback">
+              <button type="button" class="cue-pref-btn active" id="btn-sound-toggle" aria-pressed="true" aria-label="Sound cues on">Sound on</button>
+              <button type="button" class="cue-pref-btn active" id="btn-haptics-toggle" aria-pressed="true" aria-label="Haptic cues on">Haptics on</button>
+            </div>
+          </div>
+
           <button type="button" class="btn btn-primary btn-start-workout" id="btn-start-workout" aria-label="Start exercise">Start exercise</button>
 
           <button type="button" class="btn btn-secondary btn-view-history" id="btn-view-history" aria-label="View session history">Session history</button>
@@ -139,6 +147,7 @@
           <div class="set-dots" id="set-dots" role="status" aria-label="Set progress"></div>
           <div class="timer-info-row" id="timer-info-row">
             <div class="phase-badge" id="phase-badge" aria-live="polite">Work</div>
+            <div class="timer-next-up" id="timer-next-up" aria-live="polite">Up next: Rest</div>
           </div>
 
           <button type="button" class="timer-display-button" id="timer-display-btn" aria-label="Start timer">
@@ -162,6 +171,7 @@
         <div class="timer-actions">
           <button type="button" class="btn btn-secondary" id="btn-reset" aria-label="Hold for 1 second to reset and go back">Hold to reset</button>
           <button type="button" class="btn btn-primary" id="btn-start" aria-label="Start timer">Start</button>
+          <button type="button" class="btn btn-secondary btn-skip-phase" id="btn-skip-phase" aria-label="Skip to next phase">Skip</button>
         </div>
       </div>
     </main>

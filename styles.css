@@ -430,6 +430,42 @@ body::before {
   margin-top: 0.25rem;
 }
 
+.cue-prefs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cue-pref-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.cue-pref-btn {
+  min-height: var(--tap-min);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(139, 149, 168, 0.28);
+  background: rgba(139, 149, 168, 0.08);
+  color: var(--text-muted);
+  font-family: var(--font);
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.cue-pref-btn.active {
+  color: var(--text);
+  border-color: rgba(122, 223, 158, 0.55);
+  background: rgba(122, 223, 158, 0.18);
+}
+
+.cue-pref-btn:hover {
+  border-color: rgba(139, 149, 168, 0.4);
+  color: var(--text);
+}
+
 .settings-card .btn-view-history {
   margin-top: 0.25rem;
 }
@@ -489,6 +525,17 @@ body::before {
   padding-bottom: max(0.85rem, calc(env(safe-area-inset-bottom) + 0.45rem));
 }
 
+.timer-actions .btn-skip-phase {
+  grid-column: 1 / -1;
+  min-height: 2.55rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+}
+
+.timer-actions.done .btn-skip-phase {
+  display: none;
+}
+
 .timer-actions .btn-back {
   order: -1;
   width: 100%;
@@ -511,12 +558,25 @@ body::before {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
+  gap: 0.35rem;
   margin-bottom: 0.15rem;
   padding: 0;
   background: none;
   border: none;
   box-shadow: none;
+}
+
+.timer-next-up {
+  min-height: 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.timer-next-up.is-hidden {
+  visibility: hidden;
 }
 
 .timer-footer-meta {
