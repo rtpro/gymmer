@@ -1,11 +1,38 @@
-const CACHE_NAME = "gymmer-v92";
+const CACHE_NAME = "gymmer-v94";
 const ASSETS = ["index.html", "styles.css", "app.js", "firebase-app.js", "manifest.json", "icon.svg"];
+
+function scopeBase() {
+  return new URL(self.registration.scope);
+}
+
+function assetHref(path) {
+  return new URL(path, scopeBase()).href;
+}
+
+function isSameOrigin(url) {
+  return url.origin === self.location.origin;
+}
+
+function isAllowlistedAsset(url) {
+  if (!isSameOrigin(url)) return false;
+  var base = scopeBase();
+  for (var i = 0; i < ASSETS.length; i++) {
+    var assetUrl = new URL(ASSETS[i], base);
+    if (url.pathname === assetUrl.pathname) return true;
+  }
+  return false;
+}
+
+function isScopeNavigation(request, url) {
+  if (request.mode !== "navigate" || !isSameOrigin(url)) return false;
+  var scope = scopeBase();
+  return url.href.indexOf(scope.href) === 0;
+}
 
 self.addEventListener("install", function (e) {
   e.waitUntil(
     caches.open(CACHE_NAME).then(function (cache) {
-      var base = new URL(self.registration.scope);
-      var urls = ASSETS.map(function (p) { return new URL(p, base).href; });
+      var urls = ASSETS.map(function (p) { return assetHref(p); });
       return cache.addAll(urls);
     })
   );
@@ -24,9 +51,29 @@ self.addEventListener("activate", function (e) {
 });
 
 self.addEventListener("fetch", function (e) {
+  var request = e.request;
+  if (request.method !== "GET") return;
+
+  var url;
+  try {
+    url = new URL(request.url);
+  } catch (err) {
+    return;
+  }
+
+  // Bypass SW for cross-origin and non-static requests (Firebase/auth/API, etc.).
+  var cacheKey = null;
+  if (isAllowlistedAsset(url)) {
+    cacheKey = url.href;
+  } else if (isScopeNavigation(request, url)) {
+    cacheKey = assetHref("index.html");
+  } else {
+    return;
+  }
+
   e.respondWith(
-    caches.match(e.request).then(function (cached) {
-      return cached || fetch(e.request);
+    caches.match(cacheKey).then(function (cached) {
+      return cached || fetch(request);
     })
   );
 });

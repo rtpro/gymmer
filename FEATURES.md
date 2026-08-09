@@ -54,6 +54,7 @@ This file is the source of truth for current Gymmer behavior. Update this file i
 
 - Service worker file `sw.js` is registered from `app.js`.
 - Cache asset list includes app shell files: `index.html`, `styles.css`, `app.js`, `firebase-app.js`, `manifest.json`, `icon.svg`.
+- Service worker fetch handler only intercepts `GET` requests for same-origin allowlisted app shell assets (plus same-origin navigations served as `index.html`); cross-origin and API/Firebase requests bypass the service worker entirely and are never cache-matched.
 - Visibility/page-show events resync timer from timestamps when app returns to foreground.
 - Wake Lock is requested when running (if available) and released on pause/stop/reset.
 

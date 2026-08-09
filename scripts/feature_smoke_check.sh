@@ -70,5 +70,8 @@ assert_contains "$SW_JS" '"styles\.css"' 'Service worker caches styles.css'
 assert_contains "$SW_JS" '"app\.js"' 'Service worker caches app.js'
 assert_contains "$SW_JS" '"manifest\.json"' 'Service worker caches manifest.json'
 assert_contains "$SW_JS" '"icon\.svg"' 'Service worker caches icon.svg'
+assert_contains "$SW_JS" 'request\.method !== "GET"' 'Service worker fetch handler restricts to GET'
+assert_contains "$SW_JS" 'isAllowlistedAsset' 'Service worker fetch handler uses static asset allowlist'
+assert_contains "$SW_JS" 'isSameOrigin' 'Service worker fetch handler requires same-origin'
 
 printf '\nFeature smoke check passed.\n'
