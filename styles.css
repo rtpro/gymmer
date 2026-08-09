@@ -353,53 +353,6 @@ body::before {
   background: rgba(120, 172, 255, 0.2);
 }
 
-.health-export-panel {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0.7rem;
-  padding: 0.8rem;
-  border: 1px solid rgba(139, 149, 168, 0.2);
-  border-radius: 0.75rem;
-  background: rgba(12, 17, 26, 0.46);
-}
-
-.health-export-copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-}
-
-.health-export-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-}
-
-.health-export-status {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text);
-  font-size: 0.86rem;
-  font-weight: 600;
-}
-
-.health-export-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr 0.9fr;
-  gap: 0.45rem;
-}
-
-.health-export-actions .btn {
-  min-height: 2.25rem;
-  padding: 0 0.55rem;
-  font-size: 0.74rem;
-}
-
 .insight-spark,
 .insight-pr {
   grid-column: 1 / -1;

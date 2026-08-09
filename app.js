@@ -12,7 +12,6 @@
   const MAX_COMPLETIONS = 50;
   const SESSION_GROUP_WINDOW_MS = 90 * 60 * 1000;
   const HISTORY_DEDUPE_MIGRATION_KEY = "gymmer_history_dedupe_v1_done";
-  const HEALTH_EXPORT_KEY = "gymmer_health_connect_exported_v1";
   let suppressCloudSave = false;
 
   const BODY_PART_META = {
@@ -191,10 +190,6 @@
     historyModeBtns: document.querySelectorAll(".history-mode-btn"),
     historyFilterBtns: document.querySelectorAll(".history-filter-btn"),
     historyBodyFilters: document.getElementById("history-body-filters"),
-    healthExportStatus: document.getElementById("health-export-status"),
-    btnHealthCopy: document.getElementById("btn-health-copy"),
-    btnHealthDownload: document.getElementById("btn-health-download"),
-    btnHealthSync: document.getElementById("btn-health-sync"),
     btnClearHistory: document.getElementById("btn-clear-history"),
     btnViewHistory: document.getElementById("btn-view-history"),
     btnBackHistory: document.getElementById("btn-back-history"),
@@ -718,216 +713,6 @@
     return sessions;
   }
 
-  function getEntryCompletedWork(entry) {
-    return entry && entry.completedWork != null ? entry.completedWork : (entry && (entry.totalSets || entry.sets)) || 0;
-  }
-
-  function getEntryCompletedRest(entry) {
-    if (!entry) return 0;
-    return entry.completedRest != null ? entry.completedRest : getEntryCompletedWork(entry);
-  }
-
-  function getEntryDurationSeconds(entry) {
-    const work = Math.max(0, getEntryCompletedWork(entry));
-    const rest = Math.max(0, getEntryCompletedRest(entry));
-    const workSeconds = Math.max(0, parseInt(entry && entry.workSeconds, 10) || 0);
-    const restSeconds = Math.max(0, parseInt(entry && entry.restSeconds, 10) || 0);
-    return Math.max(60, (work * workSeconds) + (rest * restSeconds));
-  }
-
-  function hashString(str) {
-    let hash = 2166136261;
-    for (let i = 0; i < str.length; i += 1) {
-      hash ^= str.charCodeAt(i);
-      hash = Math.imul(hash, 16777619);
-    }
-    return (hash >>> 0).toString(36);
-  }
-
-  function getHealthRecordId(entry) {
-    const raw = [
-      entry.date || "",
-      entry.workSeconds || "",
-      entry.restSeconds || "",
-      getEntryCompletedWork(entry),
-      getEntryCompletedRest(entry),
-      entry.totalSets || entry.sets || "",
-      entry.workoutPreset || "",
-      getEntryBodyPart(entry),
-    ].join("|");
-    return "gymmer-" + hashString(raw);
-  }
-
-  function getExportedHealthRecordIds() {
-    try {
-      const raw = localStorage.getItem(HEALTH_EXPORT_KEY);
-      const list = raw ? JSON.parse(raw) : [];
-      return Array.isArray(list) ? list : [];
-    } catch (_) {
-      return [];
-    }
-  }
-
-  function saveExportedHealthRecordIds(ids) {
-    try {
-      localStorage.setItem(HEALTH_EXPORT_KEY, JSON.stringify(Array.from(new Set(ids))));
-    } catch (_) {}
-  }
-
-  function buildHealthConnectPayload(list) {
-    const records = (Array.isArray(list) ? list : []).map(function (entry) {
-      const endMsRaw = new Date(entry.date).getTime();
-      const endMs = isNaN(endMsRaw) ? Date.now() : endMsRaw;
-      const durationSeconds = getEntryDurationSeconds(entry);
-      const startMs = endMs - (durationSeconds * 1000);
-      const bodyPart = getEntryBodyPart(entry);
-      const completedWork = getEntryCompletedWork(entry);
-      const completedRest = getEntryCompletedRest(entry);
-      const totalSets = entry.totalSets != null ? entry.totalSets : entry.sets;
-      const full = isEntryFull(entry);
-
-      return {
-        clientRecordId: getHealthRecordId(entry),
-        recordType: "ExerciseSessionRecord",
-        exerciseType: "EXERCISE_TYPE_STRENGTH_TRAINING",
-        title: "Gymmer: " + bodyPart,
-        notes: [
-          bodyPart + " workout",
-          completedWork + (totalSets ? "/" + totalSets : "") + " work sets",
-          completedRest + " rest blocks",
-          formatDuration(entry.workSeconds || 0) + " work",
-          formatDuration(entry.restSeconds || 0) + " rest",
-          full ? "Full session" : "Partial session",
-        ].join(" · "),
-        startTime: new Date(startMs).toISOString(),
-        endTime: new Date(endMs).toISOString(),
-        durationSeconds: durationSeconds,
-        metadata: {
-          source: "Gymmer",
-          workoutPreset: entry.workoutPreset || null,
-          bodyPart: bodyPart,
-          totalSets: totalSets || null,
-          completedWork: completedWork,
-          completedRest: completedRest,
-          full: full,
-        },
-      };
-    });
-
-    return {
-      schema: "com.gymmer.health-connect.export.v1",
-      generatedAt: new Date().toISOString(),
-      records: records,
-    };
-  }
-
-  function getHealthBridge() {
-    if (window.GymmerHealthConnect && typeof window.GymmerHealthConnect.writeWorkouts === "function") {
-      return { target: window.GymmerHealthConnect, nativeStringPayload: false };
-    }
-    if (window.AndroidHealthConnect && typeof window.AndroidHealthConnect.writeWorkouts === "function") {
-      return { target: window.AndroidHealthConnect, nativeStringPayload: true };
-    }
-    return null;
-  }
-
-  function setHealthExportStatus(message) {
-    if (!dom.healthExportStatus) return;
-    dom.healthExportStatus.textContent = message;
-  }
-
-  function updateHealthExportStatus() {
-    const list = getCompletions();
-    const exported = new Set(getExportedHealthRecordIds());
-    const payload = buildHealthConnectPayload(list);
-    const pending = payload.records.filter(function (record) {
-      return !exported.has(record.clientRecordId);
-    }).length;
-    if (payload.records.length === 0) {
-      setHealthExportStatus("No workouts yet");
-    } else if (pending === 0) {
-      setHealthExportStatus(payload.records.length + " workouts exposed");
-    } else {
-      setHealthExportStatus(pending + " pending · " + payload.records.length + " total");
-    }
-    if (dom.btnHealthCopy) dom.btnHealthCopy.disabled = payload.records.length === 0;
-    if (dom.btnHealthDownload) dom.btnHealthDownload.disabled = payload.records.length === 0;
-    if (dom.btnHealthSync) dom.btnHealthSync.disabled = payload.records.length === 0;
-  }
-
-  function markHealthRecordsExported(records) {
-    const ids = getExportedHealthRecordIds();
-    records.forEach(function (record) {
-      ids.push(record.clientRecordId);
-    });
-    saveExportedHealthRecordIds(ids);
-    updateHealthExportStatus();
-  }
-
-  async function copyHealthPayload() {
-    const payload = buildHealthConnectPayload(getCompletions());
-    if (!payload.records.length) return;
-    const text = JSON.stringify(payload, null, 2);
-    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
-      await navigator.clipboard.writeText(text);
-      markHealthRecordsExported(payload.records);
-      setHealthExportStatus("Copied " + payload.records.length + " workouts");
-      return;
-    }
-    window.prompt("Copy Google Health JSON", text);
-    markHealthRecordsExported(payload.records);
-    setHealthExportStatus("Prepared " + payload.records.length + " workouts");
-  }
-
-  function downloadHealthPayload() {
-    const payload = buildHealthConnectPayload(getCompletions());
-    if (!payload.records.length) return;
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "gymmer-health-connect-" + new Date().toISOString().slice(0, 10) + ".json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(function () {
-      URL.revokeObjectURL(url);
-    }, 500);
-    markHealthRecordsExported(payload.records);
-    setHealthExportStatus("Downloaded " + payload.records.length + " workouts");
-  }
-
-  async function syncHealthPayload() {
-    const payload = buildHealthConnectPayload(getCompletions());
-    if (!payload.records.length) return;
-    const bridge = getHealthBridge();
-    if (!bridge) {
-      downloadHealthPayload();
-      window.alert("Gymmer prepared a Health Connect export. Direct Google Health sync needs an Android wrapper with a Health Connect bridge.");
-      return;
-    }
-
-    if (dom.btnHealthSync) {
-      dom.btnHealthSync.disabled = true;
-      dom.btnHealthSync.textContent = "Syncing...";
-    }
-    try {
-      const bridgePayload = bridge.nativeStringPayload ? JSON.stringify(payload) : payload;
-      const result = await bridge.target.writeWorkouts(bridgePayload);
-      markHealthRecordsExported(payload.records);
-      const count = result && result.written ? result.written : payload.records.length;
-      setHealthExportStatus("Synced " + count + " workouts");
-    } catch (_) {
-      setHealthExportStatus("Sync failed");
-      window.alert("Google Health sync failed. Try again from the Android app shell.");
-    } finally {
-      if (dom.btnHealthSync) {
-        dom.btnHealthSync.textContent = "Sync";
-        dom.btnHealthSync.disabled = false;
-      }
-    }
-  }
-
   function renderHistoryInsights(list, sessions) {
     if (!dom.historyInsights) return;
     if (!list || list.length === 0) {
@@ -1124,7 +909,6 @@
     renderHistoryInsights(list, groupWorkoutsIntoSessions(list));
     syncHistoryModeButtons();
     syncHistoryFilterButtons();
-    updateHealthExportStatus();
     dom.completionsList.innerHTML = "";
 
     const isSessionMode = state.historyMode === "session";
@@ -1909,7 +1693,6 @@
   syncCustomInputs();
   syncTimerMuscleGroupTone(state.phase, !state.running);
   renderCompletions();
-  updateHealthExportStatus();
   window.addEventListener("gymmer-cloud-ready", syncCloudCompletions);
   window.addEventListener("gymmer-cloud-account", function (event) {
     renderAccountState(event.detail);
@@ -2114,26 +1897,6 @@
     dom.btnGoogleSignin.addEventListener("click", function () {
       haptic();
       signInWithGoogle();
-    });
-  }
-  if (dom.btnHealthCopy) {
-    dom.btnHealthCopy.addEventListener("click", function () {
-      haptic();
-      copyHealthPayload().catch(function () {
-        setHealthExportStatus("Copy failed");
-      });
-    });
-  }
-  if (dom.btnHealthDownload) {
-    dom.btnHealthDownload.addEventListener("click", function () {
-      haptic();
-      downloadHealthPayload();
-    });
-  }
-  if (dom.btnHealthSync) {
-    dom.btnHealthSync.addEventListener("click", function () {
-      haptic();
-      syncHealthPayload();
     });
   }
   dom.btnBackHistory.addEventListener("click", function () {
