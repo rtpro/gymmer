@@ -39,6 +39,7 @@ assert_file "$SW_JS"
 assert_contains "$APP_JS" 'const PREP_SECONDS = 3;' 'Prep phase constant exists'
 assert_contains "$APP_JS" 'const STORAGE_KEY = "gymmer_completions";' 'Completions storage key is stable'
 assert_contains "$APP_JS" 'const SESSION_KEY = "gymmer_session_v1";' 'Session storage key is stable'
+assert_contains "$APP_JS" 'const PREFS_KEY = "gymmer_prefs_v1";' 'Prefs storage key is stable'
 
 assert_contains "$APP_JS" 'phase: "work"' 'Initial phase remains work'
 assert_contains "$APP_JS" '\["prep", "work", "rest"\]' 'Session restore supports prep/work/rest'
@@ -55,6 +56,13 @@ assert_contains "$INDEX_HTML" 'id="btn-back-history"' 'Back history button ID ex
 assert_contains "$INDEX_HTML" 'id="btn-clear-history"' 'Clear history button ID exists'
 assert_contains "$INDEX_HTML" 'id="custom-work"' 'Custom work input ID exists'
 assert_contains "$INDEX_HTML" 'id="custom-rest"' 'Custom rest input ID exists'
+assert_contains "$INDEX_HTML" 'id="btn-skip-phase"' 'Skip phase button ID exists'
+assert_contains "$INDEX_HTML" 'id="timer-next-up"' 'Next-up preview ID exists'
+assert_contains "$INDEX_HTML" 'id="btn-sound-toggle"' 'Sound toggle ID exists'
+assert_contains "$INDEX_HTML" 'id="btn-haptics-toggle"' 'Haptics toggle ID exists'
+assert_contains "$APP_JS" 'function skipPhase' 'Skip phase helper exists'
+assert_contains "$APP_JS" 'function savePrefs' 'Prefs save helper exists'
+assert_contains "$APP_JS" 'function renderNextUp' 'Next-up renderer exists'
 
 assert_contains "$SW_JS" 'const CACHE_NAME = "gymmer-v[0-9]+"' 'Service worker cache key format exists'
 assert_contains "$SW_JS" '"index\.html"' 'Service worker caches index.html'
