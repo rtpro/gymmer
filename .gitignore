@@ -1,5 +1,22 @@
-# Dependencies
+# Dependencies (never commit installed packages or .bin shims)
 node_modules/
+
+# Build / Pages staging
+_site/
+
+# Android / Gradle intermediates (Capacitor native project + any nested builds)
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+.gradle/
+**/build/
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.iml
 
 # OS / editor
 .DS_Store

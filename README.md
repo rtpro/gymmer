@@ -17,6 +17,12 @@ All paths in the app are relative, so it works correctly when served from a subp
 
 ## Run locally
 
+The web app is static and needs no build step. For Capacitor / Node tooling, install dependencies from the lockfile first (do not commit `node_modules`):
+
+```bash
+npm ci
+```
+
 Serve the folder with any static server:
 
 ```bash

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "description": "Mobile-first gym interval timer",
+  "scripts": {
+    "ci": "npm ci"
+  },
   "dependencies": {
     "@capacitor/android": "7.6.6",
     "@capacitor/core": "7.6.6"
